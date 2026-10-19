@@ -1,0 +1,26 @@
+name: Build GIS Monitor
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master, gis-monitor ]
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: SDK packages
+        run: |
+          export SDK=${ANDROID_HOME:-/usr/local/lib/android/sdk}
+          yes | $SDK/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
+          $SDK/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.1.0" "ndk;29.0.14206865" "cmake;3.22.1"
+          echo "ANDROID_SDK_ROOT=$SDK" >> $GITHUB_ENV
+      - name: local.properties
+        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
+      - name: Build
+        run: ./gradlew --no-daemon assembleMobileLibre3SiNodexNogoogleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GIS-Monitor-apk
+          path: "**/build/outputs/apk/**/*.apk"
