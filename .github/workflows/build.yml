@@ -31,3 +31,26 @@ jobs:
         with:
           name: GIS-Monitor-apk
           path: "**/build/outputs/apk/**/*.apk"
+
+  emu:
+    needs: apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: GIS-Monitor-apk
+          path: dl
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Find apk
+        run: |
+          find dl -name "*.apk" | head -3
+          echo "APK=$(find dl -name '*.apk' | head -1)" >> $GITHUB_ENV
+      - name: Launch on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          script: bash emu.sh
