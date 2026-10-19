@@ -19,7 +19,14 @@ jobs:
       - name: local.properties
         run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
       - name: Build
-        run: ./gradlew --no-daemon assembleMobileLibre3SiNodexNogoogleRelease
+        run: ./gradlew --no-daemon assembleMobileLibre3SiNodexNogoogleRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
+        shell: bash
+      - name: Why failed
+        if: failure()
+        shell: bash
+        run: |
+          echo "::error title=Gradle::$(grep -n -i -E 'What went wrong|error:|FAILED|not found|Could not|No such|Execution failed' -A3 build.log | head -25 | tr '\n' '|' | cut -c1-3500)"
+          echo "::error title=Variants::$(./gradlew --no-daemon -q tasks --all 2>/dev/null | grep -i '^assemble' | head -20 | tr '\n' '|')"
       - uses: actions/upload-artifact@v4
         with:
           name: GIS-Monitor-apk
