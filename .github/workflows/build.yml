@@ -19,7 +19,7 @@ jobs:
       - name: local.properties
         run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
       - name: Build
-        run: ./gradlew --no-daemon assembleMobileLibre3SiNodexNogoogleRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
+        run: ./gradlew --no-daemon assembleMobileLibre3SiDexNogoogleRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
         shell: bash
       - name: Why failed
         if: failure()
