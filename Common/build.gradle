@@ -273,8 +273,8 @@ buildTypes {
 
         release {
             signingConfig signingConfigs.alg
-            minifyEnabled true 
-        shrinkResources true
+            minifyEnabled false 
+        shrinkResources false
 
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my', 'proguard-rules.log'
 
@@ -294,8 +294,8 @@ buildTypes {
         releaselog {
             versionNameSuffix '-log'
             signingConfig signingConfigs.alg
-            minifyEnabled true 
-        shrinkResources true
+            minifyEnabled false 
+        shrinkResources false
 
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my', 'proguard-rules.log'
 
@@ -317,8 +317,8 @@ buildTypes {
             versionNameSuffix 'DUB'
         applicationIdSuffix ".dub"
             signingConfig signingConfigs.alg
-            minifyEnabled true 
-        shrinkResources true
+            minifyEnabled false 
+        shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my', 'proguard-rules.log'
             jniDebuggable false
             debuggable false
@@ -365,8 +365,8 @@ buildTypes {
             debuggable false
 
             signingConfig signingConfigs.alg
-            minifyEnabled true 
-        shrinkResources true
+            minifyEnabled false 
+        shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my', 'proguard-rules.log'
            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my'
             externalNativeBuild.cmake {
@@ -425,7 +425,7 @@ buildTypes {
          manifestPlaceholders["debuggable"] = "true"
             versionNameSuffix 'releasedebug'
             signingConfig signingConfigs.alg
-            minifyEnabled true 
+            minifyEnabled false 
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my', 'proguard-rules.log'
             jniDebuggable false
         buildConfigField 'int', 'doLog', '0'
@@ -448,7 +448,7 @@ buildTypes {
       //  debuggable true        
            // jniDebuggable true
             signingConfig signingConfigs.alg
-            minifyEnabled true 
+            minifyEnabled false 
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules.my'
         zipAlignEnabled true
             buildConfigField 'int', 'isReleaseID', '1'
