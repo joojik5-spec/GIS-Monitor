@@ -31,6 +31,14 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.NavigationItemIconPosition
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.material3.ShortNavigationBarArrangement
 import androidx.compose.material3.ShortNavigationBarItem
@@ -827,27 +835,59 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
         bottomBar = {
             if (!isLandscape) {
                 Box {
-                    ShortNavigationBar(arrangement = ShortNavigationBarArrangement.EqualWeight) {
-                        navItems.forEach { item ->
-                            val isSelected = currentRoute == item.route || getParentRoute(currentRoute) == item.route
-                            ShortNavigationBarItem(
-                                iconPosition = NavigationItemIconPosition.Top,
-                                icon = {
-                                    TabIcon(
-                                        isSelected = isSelected,
-                                        selectedIcon = item.selectedIcon,
-                                        unselectedIcon = item.unselectedIcon,
-                                        description = item.label,
-                                        isDashboard = item.route == "dashboard",
-                                        isStatistics = item.route == "stats"
+                    // Плавающая «капсула» в стиле GIS: стекло, мягкая тень, выбранный раздел подсвечен таблеткой.
+                    androidx.compose.material3.Surface(
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .padding(horizontal = 18.dp, vertical = 10.dp)
+                            .fillMaxWidth()
+                            .height(70.dp),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(35.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.94f),
+                        tonalElevation = 6.dp,
+                        shadowElevation = 14.dp,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                    ) {
+                        androidx.compose.foundation.layout.Row(
+                            Modifier.fillMaxSize().padding(6.dp),
+                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            navItems.forEach { item ->
+                                val isSelected = currentRoute == item.route || getParentRoute(currentRoute) == item.route
+                                val pill by androidx.compose.animation.animateColorAsState(
+                                    if (isSelected) MaterialTheme.colorScheme.primaryContainer else androidx.compose.ui.graphics.Color.Transparent,
+                                    label = "navPill"
+                                )
+                                val tint by androidx.compose.animation.animateColorAsState(
+                                    if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    label = "navTint"
+                                )
+                                androidx.compose.foundation.layout.Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(29.dp))
+                                        .background(pill)
+                                        .clickable { onNavigate(item.route) },
+                                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                                ) {
+                                    androidx.compose.material3.Icon(
+                                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                        contentDescription = item.label,
+                                        tint = tint,
+                                        modifier = Modifier.size(24.dp)
                                     )
-                                },
-                                label = {
-                                    FontScaleCap { AdaptiveNavigationLabel(item.label) }
-                                },
-                                selected = isSelected,
-                                onClick = { onNavigate(item.route) }
-                            )
+                                    androidx.compose.material3.Text(
+                                        item.label,
+                                        color = tint,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
                         }
                     }
                     NavigationTapCatcherLayer(navigationTapCatcher)
@@ -941,11 +981,22 @@ private fun NavGraphBuilder.appDestinations(
                 )
             }
             // «+» вверху: добавить ещё один датчик (раздел «Датчики» убран из меню, всё начинается с главного экрана)
-            androidx.compose.material3.FilledTonalIconButton(
-                onClick = { navController.navigate("sensors") },
+            androidx.compose.foundation.layout.Row(
                 modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd)
-                    .statusBarsPadding().padding(top = 6.dp, end = 12.dp)
-            ) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Add, contentDescription = "Добавить датчик") }
+                    .statusBarsPadding().padding(top = 6.dp, end = 12.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
+            ) {
+                androidx.compose.material3.Text(
+                    "Датчики",
+                    fontSize = 20.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                androidx.compose.material3.FilledTonalIconButton(
+                    onClick = { navController.navigate("sensors") }
+                ) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Add, contentDescription = "Добавить датчик") }
+            }
         }
     }
     composable("history") {

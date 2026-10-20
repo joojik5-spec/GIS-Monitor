@@ -854,6 +854,8 @@ fun DashboardCombinedHeader(
                 onClick = onHeroClick,
                 modifier = stabilizedModifier,
                 colors = heroColors,
+                border = androidx.compose.foundation.BorderStroke(1.dp, glucoseContentColor.copy(alpha = 0.16f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 shape = heroShape
             ) {
                 heroCardContent()
@@ -862,6 +864,8 @@ fun DashboardCombinedHeader(
             Card(
                 modifier = stabilizedModifier,
                 colors = heroColors,
+                border = androidx.compose.foundation.BorderStroke(1.dp, glucoseContentColor.copy(alpha = 0.16f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 shape = heroShape
             ) {
                 heroCardContent()
@@ -878,6 +882,8 @@ fun DashboardCombinedHeader(
                 containerColor = sensorContainerColor,
                 contentColor = sensorContentColor
             ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, sensorContentColor.copy(alpha = 0.16f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
             shape = RoundedCornerShape(
                 topStart = sensorTopStart,
                 topEnd = sensorTopEnd,
