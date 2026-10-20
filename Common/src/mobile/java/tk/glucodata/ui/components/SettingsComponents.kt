@@ -439,7 +439,7 @@ fun MasterSwitchCard(
                 containerColor = if (checked) {
                     iconTint.copy(alpha = IconTileDefaults.ContainerAlpha)
                 } else {
-                    MaterialTheme.colorScheme.surfaceContainerest
+                    MaterialTheme.colorScheme.surfaceContainerHighest
                 },
             )
 
