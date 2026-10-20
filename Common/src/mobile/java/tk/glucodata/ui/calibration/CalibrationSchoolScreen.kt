@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,20 +51,35 @@ fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: 
         }
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         val raw = sp.getFloat("raw", 0f).toDouble(); val cal = if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
+        // Ваши калибровки: только включённые, сделанные уже на этом датчике.
+        val userCals = remember(start) {
+            tk.glucodata.data.calibration.CalibrationManager.getCachedCalibrations().filter { it.isEnabled && (start <= 0L || it.timestamp >= start) }
+        }
+        val hasUserCal = userCals.isNotEmpty()
         if (raw > 0) {
             val mmol = tk.glucodata.Applic.unit == 1
             fun f(v: Double) = if (mmol) String.format(java.util.Locale.US, "%.1f", v / 18.0182) else Math.round(v).toString()
             Card(shape = MaterialTheme.shapes.extraLarge) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column { Text("Сырое", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(f(raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary) }
-                        Column(horizontalAlignment = androidx.compose.ui.Alignment.End) { Text("Калиброванное", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(f(cal ?: raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }
+                        Column { Text("Сырой сигнал", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(f(raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary) }
+                        Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
+                            Text(if (hasUserCal) "С вашей калибровкой" else "Алгоритм датчика", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(f(cal ?: raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
-                    val msg = if (cal == null) "Калибровок нет: в AAPS и Nightscout уходит сырое значение." else {
-                        val d = cal - raw
-                        "Поправка " + (if (d >= 0) "+" else "−") + f(Math.abs(d)).let { if (mmol) it else it } + ". В AAPS и Nightscout уходит калиброванное значение."
+                    val msg = when {
+                        hasUserCal -> "Ваших калибровок: ${userCals.size}. В AAPS и Nightscout уходит значение с калибровкой."
+                        cal == null -> "Калибровок нет: в AAPS и Nightscout уходит значение датчика."
+                        else -> "Вы не калибровали. Разница с сырым сигналом — это собственная обработка датчика, а не ваша калибровка. В AAPS и Nightscout уходит значение датчика."
                     }
                     Text(msg, fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val last = userCals.maxByOrNull { it.timestamp }
+                    if (last != null) {
+                        val t = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(last.timestamp))
+                        fun u(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
+                        Text("Последняя калибровка $t: было ${u(last.sensorValue)} → глюкометр ${u(last.userValue)}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                    }
                 }
             }
         }
@@ -98,6 +114,8 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
     val photo = androidx.compose.runtime.remember { java.io.File(ctx.cacheDir, "meter").apply { mkdirs() }.let { java.io.File(it, "meter.jpg") } }
     val uri = androidx.compose.runtime.remember { androidx.core.content.FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", photo) }
 
+    val pending = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Float?>(null) }
+
     fun openSheet(valueDisplay: Float?) {
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         val mmol = tk.glucodata.Applic.unit == 1
@@ -113,12 +131,43 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
         scope.launch {
             val value = withContext(kotlinx.coroutines.Dispatchers.Default) { readMeter(photo, tk.glucodata.Applic.unit == 1) }
             busy.value = false
-            if (value == null) android.widget.Toast.makeText(ctx, "Число не распознано. Введите его вручную.", android.widget.Toast.LENGTH_LONG).show()
-            openSheet(value)
+            if (value == null) {
+                android.widget.Toast.makeText(ctx, "Число не распознано. Введите его вручную.", android.widget.Toast.LENGTH_LONG).show()
+                openSheet(null)
+            } else pending.value = value
         }
     }
     val perm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) shot.launch(uri) else android.widget.Toast.makeText(ctx, "Нужен доступ к камере, чтобы сфотографировать глюкометр.", android.widget.Toast.LENGTH_LONG).show()
+    }
+    pending.value?.let { v ->
+        val mmol = tk.glucodata.Applic.unit == 1
+        val shown = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { pending.value = null },
+            title = { Text("Подтверждаете показание?") },
+            text = { Text("Глюкометр показывает $shown ${if (mmol) "ммоль/л" else "мг/дл"}. Если верно, калибровка добавится сразу.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    pending.value = null
+                    val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
+                    fun d(x: Float) = if (mmol) x / 18.0182f else x
+                    val raw = d(sp.getFloat("raw", 0f))
+                    val auto = if (sp.contains("cal")) d(sp.getFloat("cal", 0f)) else raw
+                    scope.launch {
+                        val ok = tk.glucodata.data.calibration.CalibrationManager.addCalibration(System.currentTimeMillis(), auto, raw, v, null, false)
+                        val fmt = { x: Float -> String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", x) }
+                        android.widget.Toast.makeText(ctx, if (ok) "Калибровка добавлена: было ${fmt(auto)} → глюкометр $shown" else "Не удалось добавить калибровку", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }) { Text("Да, верно") }
+            },
+            dismissButton = {
+                Row {
+                    androidx.compose.material3.TextButton(onClick = { pending.value = null; openSheet(v) }) { Text("Исправить") }
+                    androidx.compose.material3.TextButton(onClick = { pending.value = null }) { Text("Отмена") }
+                }
+            }
+        )
     }
     Button(
         onClick = {
@@ -134,23 +183,26 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
     )
 }
 
-/** Читает число с фото. Возвращает значение в единицах экрана (ммоль/л или мг/дл) или null. */
+/** Читает число с фото: берёт самое крупное число на кадре (цифры глюкометра), а не первое попавшееся (дата, время, номера). */
 private suspend fun readMeter(file: java.io.File, mmol: Boolean): Float? = try {
     val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = 2 }
     val bmp = android.graphics.BitmapFactory.decodeFile(file.absolutePath, opts) ?: return null
-    val text = kotlinx.coroutines.suspendCancellableCoroutine<String> { c ->
+    val result = kotlinx.coroutines.suspendCancellableCoroutine<com.google.mlkit.vision.text.Text?> { c ->
         com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
             .process(com.google.mlkit.vision.common.InputImage.fromBitmap(bmp, 0))
-            .addOnSuccessListener { c.resume(it.text) { } }
-            .addOnFailureListener { c.resume("") { } }
+            .addOnSuccessListener { c.resume(it) { } }
+            .addOnFailureListener { c.resume(null) { } }
     }
-    val found = Regex("""\d{1,3}(?:[.,]\d)?""").findAll(text).mapNotNull { it.value.replace(',', '.').toFloatOrNull() }.toList()
-    // ммоль/л: 1.0–33.3 с десятой; мг/дл: целое 20–600. Подбираем под единицы экрана.
-    val mgdl = found.firstOrNull { it == Math.rint(it.toDouble()).toFloat() && it in 20f..600f }
-    val mm = found.firstOrNull { it in 1.0f..33.3f && it != Math.rint(it.toDouble()).toFloat() }
-    when {
-        mm != null -> if (mmol) mm else mm * 18.0182f
-        mgdl != null -> if (mmol) mgdl / 18.0182f else mgdl
-        else -> null
-    }
+    val rx = Regex("""^\d{1,3}(?:[.,]\d)?$""")
+    var best: Pair<Float, Int>? = null // значение в ммоль/л или мг/дл, высота
+    result?.textBlocks?.forEach { b -> b.lines.forEach { l -> l.elements.forEach { e ->
+        val t = e.text.trim()
+        if (!rx.matches(t)) return@forEach
+        val v = t.replace(',', '.').toFloatOrNull() ?: return@forEach
+        val whole = v == Math.rint(v.toDouble()).toFloat()
+        val mmolVal = when { !whole && v in 1.0f..33.3f -> v; whole && v in 20f..600f -> v / 18.0182f; whole && v in 2f..33f -> v; else -> return@forEach }
+        val h = e.boundingBox?.height() ?: 0
+        if (best == null || h > best!!.second) best = Pair(mmolVal, h)
+    } } }
+    best?.let { if (mmol) it.first else it.first * 18.0182f }
 } catch (t: Throwable) { null }
