@@ -222,6 +222,11 @@
             android:enabled="true"
             android:exported="false" />
 
+    <activity android:name="tk.glucodata.ui.GisPopupActivity" android:exported="true"
+            android:theme="@style/GisPopupTheme" android:launchMode="singleTask" android:taskAffinity=""
+            android:excludeFromRecents="true" android:resizeableActivity="true">
+            <intent-filter><action android:name="com.gismonitor.POPUP" /><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+        </activity>
     <receiver android:name="tk.glucodata.GisCalReceiver" android:exported="true">
             <intent-filter><action android:name="com.gismonitor.CALIBRATE" /></intent-filter>
         </receiver>
