@@ -1060,7 +1060,6 @@ private fun NavGraphBuilder.appDestinations(
         FloatingGlucoseSettingsScreen(navController, dashboardViewModel)
     }
     composable("settings/aod-display") { AodSettingsScreen(navController) }
-    composable("settings/aod-editor") { AodEditorScreen(navController) }
 
     composable("settings/turnserver") { tk.glucodata.ui.TurnServerSettingsScreen(navController) }
     composable("settings/debug") { DebugSettingsScreen(navController) }

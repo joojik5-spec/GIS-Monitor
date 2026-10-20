@@ -747,6 +747,13 @@ fun AodSettingsScreen(navController: NavController) {
     }
     var serviceEnabled by remember { mutableStateOf(isAodAccessibilityEnabled(context)) }
 
+    var opacity by rememberSaveable { mutableFloatStateOf(prefs.getFloat("aod_opacity", 1.0f)) }
+    var textScale by rememberSaveable { mutableFloatStateOf(prefs.getFloat("aod_text_scale", 1.5f)) }
+    var chartScale by rememberSaveable { mutableFloatStateOf(prefs.getFloat("aod_chart_scale", 1.5f)) }
+    var showChart by rememberSaveable { mutableStateOf(prefs.getBoolean("aod_show_chart", true)) }
+    var showArrow by rememberSaveable { mutableStateOf(prefs.getBoolean("aod_show_arrow", true)) }
+    var showSecondary by rememberSaveable { mutableStateOf(prefs.getBoolean("aod_show_secondary", false)) }
+    var arrowScale by rememberSaveable { mutableFloatStateOf(prefs.getFloat("aod_arrow_scale", 1.0f)) }
     var positions by rememberSaveable { mutableStateOf(prefs.getStringSet("aod_positions", setOf("TOP")) ?: setOf("TOP")) }
     var alignment by rememberSaveable { mutableStateOf(prefs.getString("aod_alignment", "CENTER") ?: "CENTER") }
     var fontSource by rememberSaveable { mutableStateOf(prefs.getString("aod_font_source", "APP") ?: "APP") }
@@ -762,6 +769,13 @@ fun AodSettingsScreen(navController: NavController) {
 
     fun save() {
         prefs.edit()
+            .putFloat("aod_opacity", opacity)
+            .putFloat("aod_text_scale", textScale)
+            .putFloat("aod_chart_scale", chartScale)
+            .putBoolean("aod_show_chart", showChart)
+            .putBoolean("aod_show_arrow", showArrow)
+            .putBoolean("aod_show_secondary", showSecondary)
+            .putFloat("aod_arrow_scale", arrowScale)
             .putStringSet("aod_positions", positions)
             .putString("aod_alignment", alignment)
             .putString("aod_font_source", fontSource)
@@ -936,16 +950,60 @@ fun AodSettingsScreen(navController: NavController) {
             modifier = Modifier.padding(horizontal = legacySettingsHorizontalPadding)
         )
         Spacer(Modifier.height(8.dp))
-        Column(Modifier.padding(horizontal = legacySettingsHorizontalPadding)) {
-            androidx.compose.material3.FilledTonalButton(
-                onClick = { navController.navigate("settings/aod-editor") },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(R.string.aod_editor_open)) }
-            Text(
-                stringResource(R.string.aod_editor_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.padding(horizontal = legacySettingsHorizontalPadding)
+        ) {
+            SettingsSwitchItem(
+                title = stringResource(R.string.show_chart),
+                checked = showChart,
+                onCheckedChange = { showChart = it; save() },
+                icon = null,
+                position = CardPosition.TOP
+            )
+            SettingsSwitchItem(
+                title = stringResource(R.string.show_trend_arrow),
+                checked = showArrow,
+                onCheckedChange = { showArrow = it; save() },
+                icon = null,
+                position = CardPosition.MIDDLE
+            )
+            SettingsSwitchItem(
+                title = stringResource(R.string.display_secondary_values),
+                subtitle = stringResource(R.string.display_secondary_values_desc),
+                checked = showSecondary,
+                onCheckedChange = { showSecondary = it; save() },
+                icon = null,
+                position = CardPosition.BOTTOM
+            )
+        }
+
+        LegacySliderControl(
+            label = stringResource(R.string.opacity_percent, (opacity * 100).toInt()),
+            value = opacity,
+            onValueChange = { opacity = it; save() },
+            range = 0.1f..1.0f
+        )
+        LegacySliderControl(
+            label = stringResource(R.string.text_size_percent, (textScale * 100).toInt()),
+            value = textScale,
+            onValueChange = { textScale = it; save() },
+            range = 0.5f..6.0f
+        )
+        if (showChart) {
+            LegacySliderControl(
+                label = stringResource(R.string.chart_size_percent, (chartScale * 100).toInt()),
+                value = chartScale,
+                onValueChange = { chartScale = it; save() },
+                range = 0.5f..2.0f
+            )
+        }
+        if (showArrow) {
+            LegacySliderControl(
+                label = stringResource(R.string.arrow_size_percent, (arrowScale * 100).toInt()),
+                value = arrowScale,
+                onValueChange = { arrowScale = it; save() },
+                range = 0.5f..2.0f
             )
         }
     }
