@@ -315,6 +315,10 @@ fun DashboardCombinedHeader(
             readingDeltaTexts(listOf(newest.timestamp), history, isMmol, 5, useRaw = viewMode == 1 || viewMode == 3).firstOrNull()
         }
     }
+    // Сахар без калибровки (сырое значение датчика): мелко над стрелкой; крупное число — откалиброванное
+    val heroRawText = if (viewMode == 1 || viewMode == 3) null else latestPoint?.rawValue?.takeIf { it > 0f }?.let {
+        String.format(java.util.Locale.getDefault(), if (isMmol) "%.1f" else "%.0f", it)
+    }
     val adaptiveMetrics = rememberAdaptiveWindowMetrics()
     val isLandscape = adaptiveMetrics.isLandscape
     val cornerWeights = remember(trendResult.velocity) { trendCornerWeightsFromVelocity(trendResult.velocity) }
@@ -804,6 +808,11 @@ fun DashboardCombinedHeader(
                             ),
                         verticalArrangement = Arrangement.Center
                     ) {
+                        // Изменение за 1 и 5 минут: мелко, в левом верхнем углу карточки
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            HeroDeltaMini("1м", heroDelta1, glucoseContentColor)
+                            HeroDeltaMini("5м", heroDelta5, glucoseContentColor)
+                        }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -829,10 +838,11 @@ fun DashboardCombinedHeader(
                                 trendResult = trendResult,
                                 arrowColor = heroArrowColor,
                                 deltaText = heroDeltaText.takeIf { deltaByArrow },
-                                delta1Text = heroDelta1,
-                                delta5Text = heroDelta5,
+                                delta1Text = null,
+                                delta5Text = null,
                                 contentColor = glucoseContentColor,
-                                iconSize = resolvedTrendIconSize
+                                iconSize = resolvedTrendIconSize,
+                                rawText = heroRawText
                             )
                         }
 
@@ -1162,9 +1172,22 @@ private fun HeroTrendWithDelta(
     contentColor: Color,
     iconSize: androidx.compose.ui.unit.Dp,
     delta1Text: String? = null,
-    delta5Text: String? = null
+    delta5Text: String? = null,
+    rawText: String? = null
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (!rawText.isNullOrEmpty()) {
+            androidx.compose.material3.Text(
+                text = "без калибр. $rawText",
+                style = androidx.compose.ui.text.TextStyle(
+                    fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp),
+                    fontFeatureSettings = "tnum"
+                ),
+                color = contentColor.copy(alpha = 0.75f),
+                softWrap = false,
+                maxLines = 1
+            )
+        }
         HeroDeltaMini("1м", delta1Text, contentColor)
         HeroDeltaMini("5м", delta5Text, contentColor)
         tk.glucodata.ui.components.TrendIndicator(
@@ -1192,7 +1215,7 @@ private fun HeroDeltaMini(label: String, text: String?, color: Color) {
     androidx.compose.material3.Text(
         text = "$label $triangle$number",
         style = androidx.compose.ui.text.TextStyle(
-            fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp),
+            fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp),
             fontFeatureSettings = "tnum"
         ),
         color = color.copy(alpha = 0.9f),
