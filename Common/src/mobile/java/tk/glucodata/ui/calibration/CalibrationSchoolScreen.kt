@@ -99,6 +99,19 @@ fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: 
             "Не калибруйте при резких скачках, если сахар меняется быстро или если сомневаетесь в замере.",
             fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            shape = MaterialTheme.shapes.extraLarge
+        ) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Калибровка в приложении GIS", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Если на этом телефоне установлено приложение GIS, замер глюкометра можно ввести и там: " +
+                        "удобно, когда вы уже работаете с данными AAPS и Nightscout в GIS.",
+                    fontSize = 14.sp
+                )
+            }
+        }
         MeterPhotoButton(onTriggerCalibration)
         OutlinedButton(onClick = { navController.navigate("calibrations") }, Modifier.fillMaxWidth()) { Text("Открыть калибровки") }
         Spacer(Modifier.height(80.dp))
