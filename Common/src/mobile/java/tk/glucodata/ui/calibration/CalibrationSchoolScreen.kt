@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,17 +61,6 @@ fun CalibrationSchoolScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text("Калибровка", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (ok) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
-            ),
-            shape = MaterialTheme.shapes.extraLarge
-        ) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                Text(text, fontSize = 15.sp)
-            }
-        }
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         val raw = sp.getFloat("raw", 0f).toDouble(); val cal = if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
         // Ваши калибровки: только включённые, сделанные уже на этом датчике.
@@ -78,31 +68,109 @@ fun CalibrationSchoolScreen(
             tk.glucodata.data.calibration.CalibrationManager.getCachedCalibrations().filter { it.isEnabled && (start <= 0L || it.timestamp >= start) }
         }
         val hasUserCal = userCals.isNotEmpty()
+        val mmol = tk.glucodata.Applic.unit == 1
+        val k = if (mmol) 18.0182 else 1.0
+        fun f(v: Double) = if (mmol) String.format(java.util.Locale.US, "%.1f", v / 18.0182) else Math.round(v).toString()
+        val cardBorder = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        val cardShape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
+
+        // 1. Текущее значение
         if (raw > 0) {
-            val mmol = tk.glucodata.Applic.unit == 1
-            fun f(v: Double) = if (mmol) String.format(java.util.Locale.US, "%.1f", v / 18.0182) else Math.round(v).toString()
-            Card(shape = MaterialTheme.shapes.extraLarge) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column { Text("Сырой сигнал датчика", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(f(raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary) }
-                        Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                            Text(if (hasUserCal) "С вашей калибровкой" else "Показание датчика", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(f(cal ?: raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        }
+            val trendNow = sp0.getInt("trend", 0)
+            val arrow = when { trendNow >= 2 -> "\u2191"; trendNow == 1 -> "\u2197"; trendNow == 0 -> "\u2192"; trendNow == -1 -> "\u2198"; else -> "\u2193" }
+            Card(shape = cardShape, border = cardBorder) {
+                Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(f(cal ?: raw), fontSize = 64.sp, fontWeight = FontWeight.Bold)
+                        Text(arrow, fontSize = 38.sp, color = MaterialTheme.colorScheme.primary)
                     }
-                    val msg = when {
-                        hasUserCal -> "Ваших калибровок: ${userCals.size}. В AAPS и Nightscout уходит значение с калибровкой."
-                        cal == null -> "Калибровок нет: в AAPS и Nightscout уходит значение датчика."
-                        else -> "Вы не калибровали. «Сырой сигнал» — необработанное измерение датчика, это не сахар в крови. «Показание датчика» — результат его собственной обработки: именно его вы видите на графике, и именно оно уходит в AAPS и Nightscout. Ваша калибровка подстроит это показание под глюкометр."
-                    }
-                    Text(msg, fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text((if (mmol) "ммоль/л" else "мг/дл") + " · сейчас", fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "Сырой сигнал: ${f(raw)} · " + (if (hasUserCal) "после калибровки" else "показание датчика") + ": ${f(cal ?: raw)}",
+                        fontSize = 14.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     val last = userCals.maxByOrNull { it.timestamp }
                     if (last != null) {
                         val t = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(last.timestamp))
                         fun u(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
-                        Text("Последняя калибровка $t: было ${u(last.sensorValue)} → глюкометр ${u(last.userValue)}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Последняя калибровка $t: было ${u(last.sensorValue)} → глюкометр ${u(last.userValue)}", fontSize = 14.sp)
                     }
                 }
+            }
+        }
+
+        // 2. Датчик
+        val sensorEnd = sp.getLong("end", 0L)
+        Card(shape = cardShape, border = cardBorder) {
+            Column(Modifier.padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(sp.getString("name", "Датчик") ?: "Датчик", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                val totalDays = if (start > 0 && sensorEnd > start) ((sensorEnd - start) / 86_400_000L).toInt() else 0
+                val day = if (start > 0) (hours / 24).toInt() + 1 else 0
+                Text(
+                    if (day > 0 && totalDays > 0) "День ${day.coerceAtMost(totalDays)} из $totalDays" else "Возраст датчика пока не определён",
+                    fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (start > 0 && sensorEnd > start) {
+                    LinearProgressIndicator(
+                        progress = { ((System.currentTimeMillis() - start).toFloat() / (sensorEnd - start).toFloat()).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+                    )
+                }
+            }
+        }
+
+        // 3. Калибровка: ввод прямо на экране
+        Card(shape = cardShape, border = cardBorder) {
+            Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Калибровка", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text("Сравните с глюкометром и введите его число.", fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                MeterPhotoButton(onTriggerCalibration)
+                Text(
+                    "Время: " + java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date()) + " (сейчас)",
+                    fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary
+                )
+                val step = if (mmol) 0.1f else 1f
+                val entry = androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf(if (raw > 0) (Math.round(((cal ?: raw) / k) * 10.0) / 10.0).toFloat() else 0f)
+                }
+                fun fmt(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = { entry.value = (Math.round((entry.value - step) * 10f) / 10f).coerceAtLeast(step) },
+                        modifier = Modifier.weight(1f).height(60.dp)
+                    ) { Text("−", fontSize = 26.sp) }
+                    Text(fmt(entry.value), fontSize = 46.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.4f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    OutlinedButton(
+                        onClick = { entry.value = Math.round((entry.value + step) * 10f) / 10f },
+                        modifier = Modifier.weight(1f).height(60.dp)
+                    ) { Text("+", fontSize = 26.sp) }
+                }
+                val badgeColor = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                Surface(
+                    color = badgeColor.copy(alpha = 0.14f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor.copy(alpha = 0.6f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        (if (ok) "\u2713 Сейчас оптимально калибровать: " else "\u26A0 $title. ") + text,
+                        modifier = Modifier.padding(16.dp), fontSize = 16.sp, color = badgeColor
+                    )
+                }
+                val scope = androidx.compose.runtime.rememberCoroutineScope()
+                Button(
+                    onClick = {
+                        val v = entry.value
+                        val auto = ((cal ?: raw) / k).toFloat()
+                        val rawDisplay = (raw / k).toFloat()
+                        scope.launch {
+                            val added = tk.glucodata.data.calibration.CalibrationManager.addCalibration(System.currentTimeMillis(), auto, rawDisplay, v, null, false)
+                            android.widget.Toast.makeText(ctx, if (added) "Калибровка добавлена: было ${fmt(auto)} → глюкометр ${fmt(v)}" else "Не удалось добавить калибровку", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    enabled = raw > 0 && entry.value > 0f,
+                    modifier = Modifier.fillMaxWidth().height(58.dp)
+                ) { Text("Сохранить калибровку", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
             }
         }
         Text("Как калибровать", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
@@ -140,7 +208,6 @@ fun CalibrationSchoolScreen(
                 }
             }
         }
-        MeterPhotoButton(onTriggerCalibration)
         OutlinedButton(onClick = { navController.navigate("calibrations") }, Modifier.fillMaxWidth()) { Text("Открыть калибровки") }
         Spacer(Modifier.height(80.dp))
     }
