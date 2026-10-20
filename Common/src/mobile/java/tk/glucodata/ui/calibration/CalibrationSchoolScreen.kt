@@ -24,15 +24,23 @@ fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: 
     val ctx = LocalContext.current
     val start = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE).getLong("start", 0L)
     val hours = if (start > 0) (System.currentTimeMillis() - start) / 3_600_000.0 else -1.0
+    val sp0 = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
+    val trend = sp0.getInt("trend", 0)
+    val lastTs = sp0.getLong("ts", 0L)
+    val stale = lastTs > 0L && System.currentTimeMillis() - lastTs > 15 * 60_000L
     val (title, text) = when {
-        hours < 0 && ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE).contains("ts") ->
+        hours < 0 && sp0.contains("ts") && stale ->
+            "Нет свежих данных" to "Последнее значение пришло больше 15 минут назад. Дождитесь новых показаний."
+        hours < 0 && sp0.contains("ts") ->
             "Датчик подключён" to "Возраст датчика пока не определён. Калибруйте, когда сахар ровный."
         hours < 0 -> "Датчик ещё не найден" to "Как только придут первые значения, здесь появится совет."
         hours < 24 -> "Сейчас калибровать нельзя" to "Датчику ${Math.round(hours)} ч. Первые сутки он привыкает к коже, значения плавают. Подождите ещё ${Math.ceil(24 - hours).toInt()} ч."
         hours < 48 -> "Лучше подождать" to "Датчику ${Math.round(hours)} ч. Калибровка возможна, но точнее будет после 48 часов."
-        else -> "Можно калибровать" to "Датчик «устоялся». Сделайте замер глюкометром и введите его в калибровках."
+        stale -> "Нет свежих данных" to "Последнее значение пришло больше 15 минут назад. Дождитесь новых показаний."
+        trend != 0 -> "Сейчас лучше не калибровать" to "Сахар ${if (trend > 0) "растёт" else "падает"}: замер сейчас даст неточную калибровку. Дождитесь ровной линии без стрелок, обычно это 15–20 минут."
+        else -> "Можно калибровать" to "Датчик «устоялся», сахар ровный. Сделайте замер глюкометром и введите его в калибровках."
     }
-    val ok = hours >= 48 || hours < 0 && ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE).contains("ts")
+    val ok = (hours >= 48 || hours < 0 && sp0.contains("ts")) && !stale && trend == 0
     Column(
         Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -62,16 +70,16 @@ fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: 
             Card(shape = MaterialTheme.shapes.extraLarge) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column { Text("Сырой сигнал", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(f(raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary) }
+                        Column { Text("Сырой сигнал датчика", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(f(raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary) }
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                            Text(if (hasUserCal) "С вашей калибровкой" else "Алгоритм датчика", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(if (hasUserCal) "С вашей калибровкой" else "Показание датчика", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(f(cal ?: raw), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                     val msg = when {
                         hasUserCal -> "Ваших калибровок: ${userCals.size}. В AAPS и Nightscout уходит значение с калибровкой."
                         cal == null -> "Калибровок нет: в AAPS и Nightscout уходит значение датчика."
-                        else -> "Вы не калибровали. Разница с сырым сигналом — это собственная обработка датчика, а не ваша калибровка. В AAPS и Nightscout уходит значение датчика."
+                        else -> "Вы не калибровали. «Сырой сигнал» — необработанное измерение датчика, это не сахар в крови. «Показание датчика» — результат его собственной обработки: именно его вы видите на графике, и именно оно уходит в AAPS и Nightscout. Ваша калибровка подстроит это показание под глюкометр."
                     }
                     Text(msg, fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     val last = userCals.maxByOrNull { it.timestamp }
@@ -104,12 +112,18 @@ fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: 
             shape = MaterialTheme.shapes.extraLarge
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Калибровка в приложении GIS", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text("Калибровка из приложения GIS", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Если на этом телефоне установлено приложение GIS, замер глюкометра можно ввести и там: " +
-                        "удобно, когда вы уже работаете с данными AAPS и Nightscout в GIS.",
+                    "Замер можно ввести и в приложении GIS: он придёт сюда и учтётся так же, как введённый в Мониторе, " +
+                        "а в AAPS и Nightscout уйдёт уже откалиброванное значение. " +
+                        "Для этого включите приём ниже. По умолчанию он выключен, чтобы посторонние приложения не могли менять вашу калибровку.",
                     fontSize = 14.sp
                 )
+                val gisOn = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(sp0.getBoolean("gis_cal_enabled", false)) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text("Принимать калибровки из GIS", fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    Switch(checked = gisOn.value, onCheckedChange = { gisOn.value = it; sp0.edit().putBoolean("gis_cal_enabled", it).apply() })
+                }
             }
         }
         MeterPhotoButton(onTriggerCalibration)

@@ -302,6 +302,17 @@ fun DashboardCombinedHeader(
     } else {
         null
     }
+    // Изменение за 1 и за 5 минут: мелкие цифры над стрелкой тренда.
+    val heroDelta1 = remember(history, isMmol, viewMode) {
+        history.lastOrNull()?.let { newest ->
+            readingDeltaTexts(listOf(newest.timestamp), history, isMmol, 1, useRaw = viewMode == 1 || viewMode == 3).firstOrNull()
+        }
+    }
+    val heroDelta5 = remember(history, isMmol, viewMode) {
+        history.lastOrNull()?.let { newest ->
+            readingDeltaTexts(listOf(newest.timestamp), history, isMmol, 5, useRaw = viewMode == 1 || viewMode == 3).firstOrNull()
+        }
+    }
     val adaptiveMetrics = rememberAdaptiveWindowMetrics()
     val isLandscape = adaptiveMetrics.isLandscape
     val cornerWeights = remember(trendResult.velocity) { trendCornerWeightsFromVelocity(trendResult.velocity) }
@@ -731,6 +742,8 @@ fun DashboardCombinedHeader(
                                 trendResult = trendResult,
                                 arrowColor = heroArrowColor,
                                 deltaText = heroDeltaText.takeIf { deltaByArrow },
+                                delta1Text = heroDelta1,
+                                delta5Text = heroDelta5,
                                 contentColor = glucoseContentColor,
                                 iconSize = resolvedTrendIconSize
                             )
@@ -814,6 +827,8 @@ fun DashboardCombinedHeader(
                                 trendResult = trendResult,
                                 arrowColor = heroArrowColor,
                                 deltaText = heroDeltaText.takeIf { deltaByArrow },
+                                delta1Text = heroDelta1,
+                                delta5Text = heroDelta5,
                                 contentColor = glucoseContentColor,
                                 iconSize = resolvedTrendIconSize
                             )
@@ -1106,9 +1121,13 @@ private fun HeroTrendWithDelta(
     arrowColor: Color,
     deltaText: String?,
     contentColor: Color,
-    iconSize: androidx.compose.ui.unit.Dp
+    iconSize: androidx.compose.ui.unit.Dp,
+    delta1Text: String? = null,
+    delta5Text: String? = null
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        HeroDeltaMini("1м", delta1Text)
+        HeroDeltaMini("5м", delta5Text)
         tk.glucodata.ui.components.TrendIndicator(
             trendResult = trendResult,
             modifier = Modifier.size(iconSize),
@@ -1118,6 +1137,29 @@ private fun HeroTrendWithDelta(
             HeroDeltaText(deltaText, contentColor)
         }
     }
+}
+
+/** Одна мелкая белая строка «1м ▲0.4»: за какой интервал, куда и на сколько изменился сахар. */
+@Composable
+private fun HeroDeltaMini(label: String, text: String?) {
+    if (text.isNullOrEmpty()) return
+    val t = text.trim()
+    val triangle = when {
+        t.startsWith("+") -> "\u25B2"
+        t.startsWith("\u2212") || t.startsWith("-") -> "\u25BC"
+        else -> "\u25B6"
+    }
+    val number = t.trimStart('+', '-', '\u2212')
+    androidx.compose.material3.Text(
+        text = "$label $triangle$number",
+        style = androidx.compose.ui.text.TextStyle(
+            fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp),
+            fontFeatureSettings = "tnum"
+        ),
+        color = Color.White,
+        softWrap = false,
+        maxLines = 1
+    )
 }
 
 /**
