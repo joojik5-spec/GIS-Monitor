@@ -69,8 +69,9 @@ fun ExpandableSettingsCard(
     )
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column {
@@ -143,8 +144,9 @@ fun DisclosingSwitchCard(
 ) {
     val tint = iconTint ?: MaterialTheme.colorScheme.primary
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column {
@@ -211,13 +213,9 @@ enum class CardPosition {
     BOTTOM  // Bottom corners rounded
 }
 
-fun cardShape(position: CardPosition, radius: Dp = 12.dp): RoundedCornerShape {
-    return when (position) {
-        CardPosition.SINGLE -> RoundedCornerShape(radius)
-        CardPosition.TOP -> RoundedCornerShape(topStart = radius, topEnd = radius, bottomStart = 4.dp, bottomEnd = 4.dp)
-        CardPosition.MIDDLE -> RoundedCornerShape(4.dp)
-        CardPosition.BOTTOM -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = radius, bottomEnd = radius)
-    }
+fun cardShape(position: CardPosition, radius: Dp = 24.dp): RoundedCornerShape {
+    // как в основном приложении GIS: у каждой плашки свои полностью скруглённые углы
+    return RoundedCornerShape(radius)
 }
 
 /**
@@ -227,18 +225,18 @@ fun cardShape(position: CardPosition, radius: Dp = 12.dp): RoundedCornerShape {
  * open, which reads as a glitch rather than as one group re-forming.
  */
 @Composable
-fun animatedCardShape(position: CardPosition, radius: Dp = 12.dp): RoundedCornerShape {
+fun animatedCardShape(position: CardPosition, radius: Dp = 24.dp): RoundedCornerShape {
     val spec = spring<Dp>(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessMediumLow
     )
     val topTarget = when (position) {
         CardPosition.SINGLE, CardPosition.TOP -> radius
-        CardPosition.MIDDLE, CardPosition.BOTTOM -> 4.dp
+        CardPosition.MIDDLE, CardPosition.BOTTOM -> radius
     }
     val bottomTarget = when (position) {
         CardPosition.SINGLE, CardPosition.BOTTOM -> radius
-        CardPosition.TOP, CardPosition.MIDDLE -> 4.dp
+        CardPosition.TOP, CardPosition.MIDDLE -> radius
     }
     val top by animateDpAsState(topTarget, spec, label = "cardTopRadius")
     val bottom by animateDpAsState(bottomTarget, spec, label = "cardBottomRadius")
@@ -266,8 +264,9 @@ fun SettingsItem(
     Surface(
         onClick = onClick ?: {},
         enabled = onClick != null,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = if (animatePosition) animatedCardShape(position) else cardShape(position),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surfaceContainerHigh // restored color
     ) {
         Row(
@@ -418,7 +417,7 @@ fun MasterSwitchCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
         border = BorderStroke(
             1.dp,
             if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.26f)
@@ -484,8 +483,9 @@ fun AlarmItem(
 
     Surface(
         onClick = { onToggle(!enabled) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -553,8 +553,9 @@ fun SliderItem(
     val displayValue = if (sliderValue < 30) String.format("%.1f", sliderValue) else sliderValue.toInt().toString()
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -595,8 +596,9 @@ fun DangerItem(
     
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = bgColor
     ) {
         Row(
