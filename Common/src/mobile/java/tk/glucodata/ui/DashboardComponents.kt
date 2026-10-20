@@ -810,7 +810,6 @@ fun DashboardCombinedHeader(
                     ) {
                         // Изменение за 1 и 5 минут: мелко, в левом верхнем углу карточки
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            HeroDeltaMini("1м", heroDelta1, glucoseContentColor)
                             HeroDeltaMini("5м", heroDelta5, glucoseContentColor)
                         }
                         Row(
@@ -1157,7 +1156,8 @@ fun DashboardCombinedHeader(
         }
     } else {
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            sensorPill(Modifier.fillMaxWidth().height(48.dp))
+            // плашка датчика стоит в одной полосе с «Датчики» и «+»: справа оставлено место под них
+            sensorPill(Modifier.fillMaxWidth().padding(end = 140.dp).height(44.dp).offset(y = (-8).dp))
             heroCard(Modifier.fillMaxWidth())
             belowHero?.invoke()
         }
@@ -1188,7 +1188,6 @@ private fun HeroTrendWithDelta(
                 maxLines = 1
             )
         }
-        HeroDeltaMini("1м", delta1Text, contentColor)
         HeroDeltaMini("5м", delta5Text, contentColor)
         tk.glucodata.ui.components.TrendIndicator(
             trendResult = trendResult,

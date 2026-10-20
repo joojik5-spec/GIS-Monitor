@@ -1805,7 +1805,7 @@ fun DashboardScreen(
                                 arrowForecastColorsEnabled = glucoseArrowForecastEnabled,
                                 quietWindowUntilMs = quietWindowUntilMs,
                                 belowHero = if (showPinnedStats) {
-                                    { FontScaleCap { tk.glucodata.ui.stats.PinnedStatsStrip(rows = 2, windowState = pinnedStatsWindow) } }
+                                    { FontScaleCap(max = 0.82f) { tk.glucodata.ui.stats.PinnedStatsStrip(windowState = pinnedStatsWindow) } }
                                 } else null,
                                 onQuietWindowClick = onNavigateToQuietWindow,
                                 onHeroClick = {

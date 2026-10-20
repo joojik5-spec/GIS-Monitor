@@ -128,6 +128,12 @@ fun CalibrationSchoolScreen(
                     if (day > 0 && totalDays > 0) "День ${day.coerceAtMost(totalDays)} из $totalDays" else "Возраст датчика пока не определён",
                     fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (start > 0 && sensorEnd > start) {
+                    LinearProgressIndicator(
+                        progress = { ((System.currentTimeMillis() - start).toFloat() / (sensorEnd - start).toFloat()).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+                    )
+                }
                 run {
                     val sensorVm: tk.glucodata.ui.viewmodel.SensorViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                     androidx.compose.runtime.DisposableEffect(Unit) { sensorVm.startPolling(); onDispose { sensorVm.stopPolling() } }
@@ -156,12 +162,6 @@ fun CalibrationSchoolScreen(
                             fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-                if (start > 0 && sensorEnd > start) {
-                    LinearProgressIndicator(
-                        progress = { ((System.currentTimeMillis() - start).toFloat() / (sensorEnd - start).toFloat()).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
-                    )
                 }
             }
         }

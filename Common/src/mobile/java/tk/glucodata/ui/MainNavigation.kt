@@ -973,7 +973,7 @@ private fun NavGraphBuilder.appDestinations(
 ) {
     composable("dashboard") {
         Box(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().statusBarsPadding().padding(top = 52.dp)) {
+            Box(Modifier.fillMaxSize().statusBarsPadding()) {
                 DashboardRoute(
                     dashboardViewModel = dashboardViewModel,
                     navController = navController,
