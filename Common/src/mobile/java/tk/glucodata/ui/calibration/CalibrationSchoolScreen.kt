@@ -3,6 +3,7 @@ package tk.glucodata.ui.calibration
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -126,6 +127,35 @@ fun CalibrationSchoolScreen(
                     if (day > 0 && totalDays > 0) "День ${day.coerceAtMost(totalDays)} из $totalDays" else "Возраст датчика пока не определён",
                     fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                run {
+                    val sensorVm: tk.glucodata.ui.viewmodel.SensorViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    androidx.compose.runtime.DisposableEffect(Unit) { sensorVm.startPolling(); onDispose { sensorVm.stopPolling() } }
+                    val list by sensorVm.sensors.collectAsStateWithLifecycle()
+                    val rssi = (list.firstOrNull { it.streaming } ?: list.firstOrNull())?.rssi ?: 0
+                    val lastTs = sp.getLong("ts", 0L)
+                    val ageMin = if (lastTs > 0) (System.currentTimeMillis() - lastTs) / 60_000L else -1L
+                    val level = when {
+                        ageMin < 0 || ageMin > 15 -> 0
+                        rssi in -69..-1 -> 4
+                        rssi in -80..-70 -> 3
+                        rssi in -90..-81 -> 2
+                        rssi < -90 -> 1
+                        else -> 4
+                    }
+                    val word = when (level) { 4 -> "Отличный"; 3 -> "Хороший"; 2 -> "Средний"; 1 -> "Слабый"; else -> "Нет связи" }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
+                            for (i in 1..4) Box(
+                                Modifier.width(6.dp).height((6 + i * 5).dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                                    .background(if (i <= level) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                            )
+                        }
+                        Text(
+                            "Сигнал: $word" + (if (rssi in -120..-1 && level > 0) " ($rssi дБм)" else if (ageMin > 15) " (данных нет $ageMin мин)" else ""),
+                            fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 if (start > 0 && sensorEnd > start) {
                     LinearProgressIndicator(
                         progress = { ((System.currentTimeMillis() - start).toFloat() / (sensorEnd - start).toFloat()).coerceIn(0f, 1f) },
@@ -169,26 +199,10 @@ fun CalibrationSchoolScreen(
                             Text(if (expanded.value) "\u25B4" else "\u25BE", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
                         }
                         androidx.compose.animation.AnimatedVisibility(visible = expanded.value) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                WheelColumn(
-                                    "Дата", java.text.SimpleDateFormat("d MMM", java.util.Locale.getDefault()).format(java.util.Date(shownMs)),
-                                    onUp = { setTime(cal().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }.timeInMillis) },
-                                    onDown = { setTime(cal().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }.timeInMillis) }
-                                )
-                                WheelColumn(
-                                    "Часы", String.format(java.util.Locale.US, "%02d", cal().get(java.util.Calendar.HOUR_OF_DAY)),
-                                    onUp = { setTime(cal().apply { roll(java.util.Calendar.HOUR_OF_DAY, 1) }.timeInMillis) },
-                                    onDown = { setTime(cal().apply { roll(java.util.Calendar.HOUR_OF_DAY, -1) }.timeInMillis) }
-                                )
-                                WheelColumn(
-                                    "Минуты", String.format(java.util.Locale.US, "%02d", cal().get(java.util.Calendar.MINUTE)),
-                                    onUp = { setTime(cal().apply { roll(java.util.Calendar.MINUTE, 1) }.timeInMillis) },
-                                    onDown = { setTime(cal().apply { roll(java.util.Calendar.MINUTE, -1) }.timeInMillis) }
-                                )
-                            }
+                            TimeStepper(selected = shownMs, onChange = { ms -> if (Math.abs(ms - nowMs) < 60_000L) whenMs.value = null else setTime(ms) })
                         }
                         if (!expanded.value) {
-                            Text("Нажмите, чтобы выбрать дату и время колесом", fontSize = 12.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Нажмите, чтобы изменить время замера", fontSize = 12.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -379,31 +393,3 @@ private suspend fun readMeter(file: java.io.File, mmol: Boolean): Float? = try {
     } } }
     best?.let { if (mmol) it.first else it.first * 18.0182f }
 } catch (t: Throwable) { null }
-
-/** Колонка-«колесо»: стрелки сверху и снизу, значение в центре, листается и свайпом вверх/вниз. */
-@Composable
-private fun WheelColumn(label: String, text: String, onUp: () -> Unit, onDown: () -> Unit) {
-    var acc by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0f) }
-    val upNow by androidx.compose.runtime.rememberUpdatedState(onUp)
-    val downNow by androidx.compose.runtime.rememberUpdatedState(onDown)
-    Column(
-        modifier = Modifier.pointerInput(Unit) {
-            detectVerticalDragGestures(onDragEnd = { acc = 0f }) { _, dy ->
-                acc += dy
-                while (acc > 36f) { acc -= 36f; downNow() }
-                while (acc < -36f) { acc += 36f; upNow() }
-            }
-        },
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FilledTonalIconButton(onClick = onUp) { Icon(androidx.compose.material.icons.Icons.Filled.KeyboardArrowUp, contentDescription = "Больше") }
-        Surface(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-        ) { Text(text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) }
-        FilledTonalIconButton(onClick = onDown) { Icon(androidx.compose.material.icons.Icons.Filled.KeyboardArrowDown, contentDescription = "Меньше") }
-    }
-}

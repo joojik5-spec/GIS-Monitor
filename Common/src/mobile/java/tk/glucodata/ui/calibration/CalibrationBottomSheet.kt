@@ -1,5 +1,8 @@
 package tk.glucodata.ui.calibration
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import tk.glucodata.ui.components.IconButtonTooltip
 import tk.glucodata.ui.StatusPalette
 import android.os.Build
@@ -387,56 +390,7 @@ fun CalibrationBottomSheet(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            val calendar = remember { Calendar.getInstance() }
-                            LaunchedEffect(selectedTimestamp) {
-                                calendar.timeInMillis = selectedTimestamp
-                            }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                WheelPlate(
-                                    text = SimpleDateFormat("d MMM", Locale.getDefault()).format(Date(selectedTimestamp)),
-                                    onUp = {
-                                        calendar.timeInMillis = selectedTimestamp
-                                        calendar.add(Calendar.DAY_OF_YEAR, 1)
-                                        selectedTimestamp = minOf(calendar.timeInMillis, System.currentTimeMillis())
-                                    },
-                                    onDown = {
-                                        calendar.timeInMillis = selectedTimestamp
-                                        calendar.add(Calendar.DAY_OF_YEAR, -1)
-                                        selectedTimestamp = calendar.timeInMillis
-                                    },
-                                    width = 120.dp
-                                )
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                CustomTimeField(
-                                    value = calendar.get(Calendar.HOUR_OF_DAY),
-                                    range = 0..23,
-                                    onValueChange = { h ->
-                                        calendar.set(Calendar.HOUR_OF_DAY, h)
-                                        selectedTimestamp = calendar.timeInMillis
-                                    }
-                                )
-
-                                Text(
-                                    ":",
-                                    style = MaterialTheme.typography.displayMediumEmphasized,
-                                    modifier = Modifier.padding(horizontal = 8.dp),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                CustomTimeField(
-                                    value = calendar.get(Calendar.MINUTE),
-                                    range = 0..59,
-                                    onValueChange = { m ->
-                                        calendar.set(Calendar.MINUTE, m)
-                                        selectedTimestamp = calendar.timeInMillis
-                                    }
-                                )
-                            }
+                            TimeStepper(selected = selectedTimestamp, onChange = { selectedTimestamp = it })
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
@@ -591,52 +545,53 @@ fun CalibrationBottomSheet(
     }
 }
 
+/** Выбор времени замера: быстрые кнопки, день стрелками, крупное время и шаги по часу и по 5 минут. Без прокрутки и ввода. */
 @Composable
-fun CustomTimeField(
-    value: Int,
-    range: IntRange,
-    onValueChange: (Int) -> Unit,
-    focusRequester: FocusRequester = remember { FocusRequester() }
-) {
-    // «Колесо»: стрелки сверху и снизу, листается и свайпом вверх/вниз; после последнего значения идёт первое.
-    WheelPlate(
-        text = String.format(Locale.getDefault(), "%02d", value),
-        onUp = { onValueChange(if (value >= range.last) range.first else value + 1) },
-        onDown = { onValueChange(if (value <= range.first) range.last else value - 1) }
-    )
-}
-
-@Composable
-fun WheelPlate(text: String, onUp: () -> Unit, onDown: () -> Unit, width: androidx.compose.ui.unit.Dp = 96.dp) {
-    var acc by remember { mutableStateOf(0f) }
-    val up by androidx.compose.runtime.rememberUpdatedState(onUp)
-    val down by androidx.compose.runtime.rememberUpdatedState(onDown)
-    Column(
-        modifier = Modifier.pointerInput(Unit) {
-            detectVerticalDragGestures(onDragEnd = { acc = 0f }) { _, dy ->
-                acc += dy
-                while (acc > 40f) { acc -= 40f; down() }
-                while (acc < -40f) { acc += 40f; up() }
-            }
-        },
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        IconButton(onClick = { up() }) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Больше") }
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.width(width).height(96.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text,
-                    style = MaterialTheme.typography.displayMediumEmphasized,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
+    val nowMs = System.currentTimeMillis()
+    fun set(ms: Long) = onChange(ms.coerceIn(nowMs - 7L * 86_400_000L, nowMs))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Сейчас" to 0, "15 мин назад" to 15, "30 мин" to 30, "1 час" to 60, "2 часа" to 120, "3 часа" to 180).forEach { (name, min) ->
+                FilterChip(
+                    selected = abs(selected - (nowMs - min * 60_000L)) < 60_000L,
+                    onClick = { set(nowMs - min * 60_000L) },
+                    label = { Text(name, fontSize = 14.sp) }
                 )
             }
         }
-        IconButton(onClick = { down() }) { Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Меньше") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalIconButton(onClick = { set(Calendar.getInstance().apply { timeInMillis = selected; add(Calendar.DAY_OF_YEAR, -1) }.timeInMillis) }) { Text("\u2039", fontSize = 24.sp) }
+            val dayFmt = SimpleDateFormat("yyyyDDD", Locale.US)
+            val dayWord = when (dayFmt.format(Date(selected))) {
+                dayFmt.format(Date(nowMs)) -> "Сегодня"
+                dayFmt.format(Date(nowMs - 86_400_000L)) -> "Вчера"
+                else -> null
+            }
+            val dateText = SimpleDateFormat("d MMMM", Locale.getDefault()).format(Date(selected))
+            Text(if (dayWord != null) "$dayWord, $dateText" else dateText, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+            FilledTonalIconButton(onClick = { set(Calendar.getInstance().apply { timeInMillis = selected; add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis) }) { Text("\u203A", fontSize = 24.sp) }
+        }
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(selected)),
+                fontSize = 44.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)
+            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("\u22121 ч" to -60, "\u22125 мин" to -5, "+5 мин" to 5, "+1 ч" to 60).forEach { (name, dm) ->
+                FilledTonalButton(
+                    onClick = { set(selected + dm * 60_000L) },
+                    modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
+                ) { Text(name, fontSize = 14.sp, maxLines = 1) }
+            }
+        }
     }
 }
 
