@@ -261,8 +261,8 @@ fun DashboardCombinedHeader(
 ) {
     // Determine Colors based on logic
     // Glucose: primary tonal surface with a very light range tint when fresh data is out of range.
-    val glucoseBaseContainerColor = MaterialTheme.colorScheme.primaryContainer
-    val glucoseContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val glucoseBaseContainerColor = MaterialTheme.colorScheme.surfaceContainer
+    val glucoseContentColor = MaterialTheme.colorScheme.onSurface
 
     // Sensor: Surface Variant (Tonal) vs Tertiary Container (Expiring)
     // FIX: Replaced fragile string matching (failed in Dutch, false positive in English for "1 days in use")
@@ -270,8 +270,8 @@ fun DashboardCombinedHeader(
     val isExpiring = sensorProgress > 0.90f
     // FIX: User reported "Silly" contrast in Dark Mode with surfaceVariant (too bright/green).
     // Switched to primaryContainer to match the Glucose Card (Left) for a cohesive dark look.
-    val sensorContainerColor = if (isExpiring) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) // Darker variant
-    val sensorContentColor = if (isExpiring) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimaryContainer
+    val sensorContainerColor = if (isExpiring) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer
+    val sensorContentColor = if (isExpiring) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
 
     // Advanced Trend
     val trendResult = remember(history, latestPoint, currentSnapshot) {
@@ -880,9 +880,9 @@ fun DashboardCombinedHeader(
                 onClick = onHeroClick,
                 modifier = stabilizedModifier,
                 colors = heroColors,
-                border = androidx.compose.foundation.BorderStroke(1.dp, glucoseContentColor.copy(alpha = 0.16f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                shape = heroShape
+                shape = RoundedCornerShape(24.dp)
             ) {
                 heroCardContent()
             }
@@ -890,9 +890,9 @@ fun DashboardCombinedHeader(
             Card(
                 modifier = stabilizedModifier,
                 colors = heroColors,
-                border = androidx.compose.foundation.BorderStroke(1.dp, glucoseContentColor.copy(alpha = 0.16f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                shape = heroShape
+                shape = RoundedCornerShape(24.dp)
             ) {
                 heroCardContent()
             }
@@ -908,7 +908,7 @@ fun DashboardCombinedHeader(
                 containerColor = sensorContainerColor,
                 contentColor = sensorContentColor
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, sensorContentColor.copy(alpha = 0.16f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
             shape = RoundedCornerShape(
                 topStart = sensorTopStart,
@@ -1102,16 +1102,16 @@ fun DashboardCombinedHeader(
         Card(
             modifier = modifier,
             colors = CardDefaults.cardColors(containerColor = sensorContainerColor, contentColor = sensorContentColor),
-            border = androidx.compose.foundation.BorderStroke(1.dp, sensorContentColor.copy(alpha = 0.16f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            shape = RoundedCornerShape(50)
+            shape = RoundedCornerShape(24.dp)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 if (sensorProgress > 0f) {
                     val fillColor = when {
                         sensorProgress > 0.95f -> MaterialTheme.colorScheme.error
                         sensorProgress > 0.80f -> MaterialTheme.colorScheme.tertiary
-                        else -> StatusPalette.sensorLifeFill
+                        else -> MaterialTheme.colorScheme.primary
                     }
                     Box(Modifier.fillMaxHeight().fillMaxWidth(sensorProgress).background(fillColor.copy(alpha = 0.25f)))
                 }
@@ -1135,6 +1135,8 @@ fun DashboardCombinedHeader(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
+                    // уровень шума сигнала, как был в карточке датчика
+                    if (trendResult.noiseLevel > 0f) SignalQualityIndicator(noiseLevel = trendResult.noiseLevel)
                     Text(
                         text = if (pillStatusOnly) sensorStatus else pillLifecycle,
                         style = MaterialTheme.typography.labelLarge,
@@ -1178,7 +1180,7 @@ private fun HeroTrendWithDelta(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (!rawText.isNullOrEmpty()) {
             androidx.compose.material3.Text(
-                text = "без калибр. $rawText",
+                text = rawText,
                 style = androidx.compose.ui.text.TextStyle(
                     fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp),
                     fontFeatureSettings = "tnum"

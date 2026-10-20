@@ -72,7 +72,7 @@ fun ExpandableSettingsCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column {
             Row(
@@ -147,7 +147,7 @@ fun DisclosingSwitchCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column {
             Row(
@@ -267,7 +267,7 @@ fun SettingsItem(
         modifier = modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = if (animatePosition) animatedCardShape(position) else cardShape(position),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh // restored color
+        color = MaterialTheme.colorScheme.surfaceContainer // restored color
     ) {
         Row(
             modifier = Modifier
@@ -439,7 +439,7 @@ fun MasterSwitchCard(
                 containerColor = if (checked) {
                     iconTint.copy(alpha = IconTileDefaults.ContainerAlpha)
                 } else {
-                    MaterialTheme.colorScheme.surfaceContainerHighest
+                    MaterialTheme.colorScheme.surfaceContainerest
                 },
             )
 
@@ -486,7 +486,7 @@ fun AlarmItem(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -556,7 +556,7 @@ fun SliderItem(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = cardShape(position),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row {
@@ -584,7 +584,7 @@ fun DangerItem(
     severity: DangerSeverity = DangerSeverity.HIGH
 ) {
     val (bgColor, contentColor) = when (severity) {
-        DangerSeverity.LOW -> MaterialTheme.colorScheme.surfaceContainerHigh to MaterialTheme.colorScheme.onSurface
+        DangerSeverity.LOW -> MaterialTheme.colorScheme.surfaceContainer to MaterialTheme.colorScheme.onSurface
         DangerSeverity.MEDIUM -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
         DangerSeverity.HIGH -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
     }

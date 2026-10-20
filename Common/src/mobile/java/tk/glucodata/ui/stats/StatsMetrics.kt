@@ -1061,7 +1061,7 @@ internal fun PinnedMetricChip(
                 scaleY = pressScale
             }
             .clip(statsCardShape(16.dp * contentScale, 10.dp * contentScale))
-            .background(tone.copy(alpha = 0.11f).compositeOver(MaterialTheme.colorScheme.surfaceContainerHigh))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(
@@ -1699,7 +1699,7 @@ private fun PinnedWindowPill(
                 scaleY = pressScale
             }
             .clip(statsCardShape(16.dp * contentScale, 10.dp * contentScale))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,

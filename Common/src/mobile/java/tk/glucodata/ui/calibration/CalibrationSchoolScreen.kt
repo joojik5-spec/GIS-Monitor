@@ -87,7 +87,7 @@ fun CalibrationSchoolScreen(
         if (raw > 0) {
             val trendNow = sp0.getInt("trend", 0)
             val arrow = when { trendNow >= 2 -> "\u2191"; trendNow == 1 -> "\u2197"; trendNow == 0 -> "\u2192"; trendNow == -1 -> "\u2198"; else -> "\u2193" }
-            Card(shape = cardShape, border = cardBorder) {
+            Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                 Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(f(cal ?: raw), fontSize = 64.sp, fontWeight = FontWeight.Bold)
@@ -119,7 +119,7 @@ fun CalibrationSchoolScreen(
 
         // 2. Датчик
         val sensorEnd = sp.getLong("end", 0L)
-        Card(shape = cardShape, border = cardBorder) {
+        Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text((sp.getString("name", "Датчик") ?: "Датчик").let { if (it == "Sensor") "Датчик" else it }, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 val totalDays = if (start > 0 && sensorEnd > start) ((sensorEnd - start) / 86_400_000L).toInt() else 0
@@ -167,7 +167,7 @@ fun CalibrationSchoolScreen(
         }
 
         // 3. Калибровка: ввод прямо на экране
-        Card(shape = cardShape, border = cardBorder) {
+        Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Калибровка", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 Text("Сравните с глюкометром и введите его число.", fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
