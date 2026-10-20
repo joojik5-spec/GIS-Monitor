@@ -12,7 +12,7 @@ base `origin/main` = `0b3f4daad`)
 Medtrum's EasySense app ships a vendor algorithm as `libmdkjnidemo.so` — a glucose
 predictor used for the "predicted low glucose" alarm. JugglucoNG's house rule is that a
 vendor binary is never committed to the repo (precedent: `libalgorithm-jni.so`, see
-`docs/ct14-poctech-plan.md` §2.1 and `CLAUDE.md`), and that vendor algorithms are
+`docs/ct14-poctech-plan.md` §2.1), and that vendor algorithms are
 reimplemented in-tree where possible (precedent: the Anytime / CT-14 track,
 `docs/anytime-native-algorithm-plan.md`).
 
