@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import tk.glucodata.GisBridge
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.ShowChart
@@ -501,6 +502,19 @@ fun ExpressiveSettingsScreen(
                     position = CardPosition.MIDDLE,
                     onCheckedChange = { viewModel.toggleGlucodataBroadcast(it) }
                 )
+                run {
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    var gisShare by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(GisBridge.shareEnabled(ctx)) }
+                    SettingsSwitchItem(
+                        title = stringResource(R.string.gis_broadcast),
+                        subtitle = stringResource(R.string.gis_broadcast_desc),
+                        checked = gisShare,
+                        icon = Icons.AutoMirrored.Filled.Send,
+                        iconTint = exchangeColor,
+                        position = CardPosition.MIDDLE,
+                        onCheckedChange = { gisShare = it; GisBridge.setShare(ctx, it) }
+                    )
+                }
                 // The computed trend only ever reaches an ExchangeGlucosePayload consumer, so the
                 // row is noise until one of them is on. Stay visible while the setting itself is
                 // enabled, otherwise turning the last consumer off would strand it out of reach.

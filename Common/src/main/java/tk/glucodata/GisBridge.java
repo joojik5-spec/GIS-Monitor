@@ -15,11 +15,19 @@ public class GisBridge extends ContentProvider {
     private static final String PREFS = "gis_bridge";
     private static final String[] COLS = {"ts", "raw_mgdl", "cal_mgdl", "trend", "sensor_name", "sensor_start", "sensor_end", "signal"};
 
+    /** Переключатель «Передавать в GIS»: по умолчанию включён. */
+    public static boolean shareEnabled(Context c) {
+        try { return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("share", true); } catch (Throwable t) { return true; }
+    }
+    public static void setShare(Context c, boolean on) {
+        try { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("share", on).apply(); } catch (Throwable ignored) { }
+    }
+
     /** Called for every new value (from SendLikexDrip.broadcastglucose). rate: mg/dL per minute * 60000 scale as in Juggluco. */
     public static void publish(double glucoseMgdl, float rate, long timeMs, long sensorStartMs, int sensorGen) {
         try {
             final Context c = Applic.app;
-            if (c == null) return;
+            if (c == null || !shareEnabled(c)) return;
             final double perMin = rate / 60000.0; // mg/dL per minute
             int trend = perMin >= 3 ? 3 : perMin >= 2 ? 2 : perMin >= 1 ? 1 : perMin > -1 ? 0 : perMin > -2 ? -1 : perMin > -3 ? -2 : -3;
             final long days = sensorGen == 0x10 ? 22 : 14; // Sibionics 2 — 22 days (GS3 as well); other sensors per their own life
@@ -36,7 +44,7 @@ public class GisBridge extends ContentProvider {
     static void publishPayload(ExchangeGlucosePayload p, long sensorStartMs) {
         try {
             final Context c = Applic.app;
-            if (c == null) return;
+            if (c == null || !shareEnabled(c)) return;
             final double k = Applic.unit == 1 ? 18.0182 : 1.0;
             final double cal = p.getPrimaryMgdl();
             final double raw = Float.isNaN(p.getRawValue()) || p.getRawValue() <= 0f ? cal : p.getRawValue() * k;
@@ -65,7 +73,7 @@ public class GisBridge extends ContentProvider {
     @Override public Cursor query(Uri uri, String[] p, String s, String[] a, String o) {
         final SharedPreferences sp = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         final MatrixCursor cur = new MatrixCursor(COLS);
-        if (sp.contains("ts")) {
+        if (sp.getBoolean("share", true) && sp.contains("ts")) {
             final double raw = sp.getFloat("raw", 0f);
             cur.addRow(new Object[]{sp.getLong("ts", 0), raw, sp.contains("cal") ? (Object) (double) sp.getFloat("cal", 0f) : null,
                 sp.getInt("trend", 0), sp.getString("name", "Sensor"), sp.getLong("start", 0), sp.getLong("end", 0), 100});
