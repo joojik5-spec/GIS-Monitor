@@ -1,5 +1,6 @@
 package tk.glucodata.ui.calibration
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
@@ -634,7 +635,7 @@ private fun HoldArrow(icon: androidx.compose.ui.graphics.vector.ImageVector, act
         shape = RoundedCornerShape(50),
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         modifier = Modifier.size(width = 64.dp, height = 36.dp).pointerInput(Unit) {
-            androidx.compose.foundation.gestures.detectTapGestures(onPress = {
+            detectTapGestures(onPress = {
                 act()
                 val job = scope.launch {
                     kotlinx.coroutines.delay(380)
