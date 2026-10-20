@@ -3065,4 +3065,6 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="alert_sound_volume">Громкость звука тревоги</string>
     <string name="gis_broadcast">GIS</string>
     <string name="gis_broadcast_desc">Сахар уходит в приложение GIS на этом телефоне, без интернета</string>
+    <string name="aod_editor_open">Настроить вид на чёрном экране</string>
+    <string name="aod_editor_hint">Галочки и ползунки на чёрном фоне: результат видно сразу.</string>
 </resources>
