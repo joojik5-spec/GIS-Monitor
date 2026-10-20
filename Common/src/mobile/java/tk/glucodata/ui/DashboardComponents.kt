@@ -105,6 +105,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.layout.onSizeChanged
@@ -843,6 +844,17 @@ fun DashboardCombinedHeader(
                                 iconSize = resolvedTrendIconSize,
                                 rawText = heroRawText
                             )
+
+                            HeroMiniChart(
+                                history = history,
+                                isMmol = isMmol,
+                                lineColor = MaterialTheme.colorScheme.primary,
+                                textColor = glucoseContentColor,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(72.dp)
+                                    .padding(start = 14.dp)
+                            )
                         }
 
                         if (peerReadings.isNotEmpty()) {
@@ -1097,55 +1109,23 @@ fun DashboardCombinedHeader(
         }
     }
 
-    // Узкая округлая плашка датчика: имя и срок жизни в одну строку, заливка показывает, сколько прошло
-    val sensorPill: @Composable (Modifier) -> Unit = { modifier ->
-        Card(
-            modifier = modifier,
-            colors = CardDefaults.cardColors(containerColor = sensorContainerColor, contentColor = sensorContentColor),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            shape = RoundedCornerShape(24.dp)
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (sensorProgress > 0f) {
-                    val fillColor = when {
-                        sensorProgress > 0.95f -> MaterialTheme.colorScheme.error
-                        sensorProgress > 0.80f -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.primary
-                    }
-                    Box(Modifier.fillMaxHeight().fillMaxWidth(sensorProgress).background(fillColor.copy(alpha = 0.25f)))
-                }
-                val pillLifecycle = if (sensorHoursRemaining in 0L..24L) "$sensorHoursRemaining" + "ч" else daysRemaining
-                val pillStatusOnly = shouldShowDashboardSensorStatus(
-                    isCloneSource = isCloneSource,
-                    isFreshData = isFreshData,
-                    sensorStatus = sensorStatus,
-                    heroOwnsAwaitingStatus = resolvedDataState.isAwaitingData && statusCopy != null && pillLifecycle.isNotEmpty(),
-                )
-                Row(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = sensorDisplayName.ifEmpty { "Датчик" },
-                        style = MaterialTheme.typography.titleSmall,
-                        color = sensorContentColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    // уровень шума сигнала, как был в карточке датчика
-                    if (trendResult.noiseLevel > 0f) SignalQualityIndicator(noiseLevel = trendResult.noiseLevel)
-                    Text(
-                        text = if (pillStatusOnly) sensorStatus else pillLifecycle,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = sensorContentColor.copy(alpha = 0.85f),
-                        maxLines = 1
-                    )
-                }
-            }
-        }
+    // Плашка датчика закреплена вверху экрана (рисуется в MainNavigation), здесь только отдаём её данные
+    run {
+        val pillLifecycle = if (sensorHoursRemaining in 0L..24L) "$sensorHoursRemaining" + "ч" else daysRemaining
+        val pillStatusOnly = shouldShowDashboardSensorStatus(
+            isCloneSource = isCloneSource,
+            isFreshData = isFreshData,
+            sensorStatus = sensorStatus,
+            heroOwnsAwaitingStatus = resolvedDataState.isAwaitingData && statusCopy != null && pillLifecycle.isNotEmpty(),
+        )
+        val pillData = SensorPillData(
+            name = sensorDisplayName.ifEmpty { "Датчик" },
+            progress = sensorProgress,
+            text = if (pillStatusOnly) sensorStatus else pillLifecycle,
+            noise = trendResult.noiseLevel,
+            expiring = isExpiring
+        )
+        androidx.compose.runtime.SideEffect { SensorPillHolder.data = pillData }
     }
 
     if (isLandscape) {
@@ -1158,10 +1138,133 @@ fun DashboardCombinedHeader(
         }
     } else {
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // плашка датчика стоит в одной полосе с «Датчики» и «+»: справа оставлено место под них
-            sensorPill(Modifier.fillMaxWidth().padding(end = 140.dp).height(44.dp).offset(y = (-8).dp))
             heroCard(Modifier.fillMaxWidth())
             belowHero?.invoke()
+        }
+    }
+}
+
+
+data class SensorPillData(val name: String, val progress: Float, val text: String, val noise: Float, val expiring: Boolean)
+
+object SensorPillHolder {
+    var data by mutableStateOf<SensorPillData?>(null)
+}
+
+/** Закреплённая плашка датчика: имя, срок жизни, заливка по возрасту и уровень шума. */
+@Composable
+fun SensorPillBar(data: SensorPillData, modifier: Modifier = Modifier) {
+    val container = if (data.expiring) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer
+    val content = if (data.expiring) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (data.progress > 0f) {
+                val fill = when {
+                    data.progress > 0.95f -> MaterialTheme.colorScheme.error
+                    data.progress > 0.80f -> MaterialTheme.colorScheme.tertiary
+                    else -> MaterialTheme.colorScheme.primary
+                }
+                Box(Modifier.fillMaxHeight().fillMaxWidth(data.progress.coerceIn(0f, 1f)).background(fill.copy(alpha = 0.22f)))
+            }
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = data.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                if (data.noise > 0f) SignalQualityIndicator(noiseLevel = data.noise)
+                Text(
+                    text = data.text,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = content.copy(alpha = 0.85f),
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Мини-график за час справа от числа: без осей и разделителей. Тянется пальцем по времени
+ * (как нижний график), нажатие возвращает к текущему моменту.
+ */
+@Composable
+private fun HeroMiniChart(
+    history: List<GlucosePoint>,
+    isMmol: Boolean,
+    lineColor: Color,
+    textColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val windowMs = 60L * 60_000L
+    var offsetMs by remember { mutableStateOf(0L) }
+    val newest = history.lastOrNull()?.timestamp ?: return
+    val oldest = history.firstOrNull()?.timestamp ?: newest
+    val maxOffset = (newest - oldest - windowMs).coerceAtLeast(0L)
+    val end = newest - offsetMs.coerceIn(0L, maxOffset)
+    val start = end - windowMs
+    val points = remember(history, start, end) { history.filter { it.timestamp in start..end && it.value > 0f } }
+    Box(
+        modifier = modifier
+            .pointerInput(maxOffset) {
+                detectHorizontalDragGestures { change, dx ->
+                    change.consume()
+                    offsetMs = (offsetMs + (dx / size.width.coerceAtLeast(1) * windowMs).toLong()).coerceIn(0L, maxOffset)
+                }
+            }
+            .pointerInput(Unit) { detectTapGestures { offsetMs = 0L } }
+    ) {
+        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+            if (points.size < 2) return@Canvas
+            val minV0 = points.minOf { it.value }
+            val maxV0 = points.maxOf { it.value }
+            val minSpan = if (isMmol) 2f else 36f
+            val mid = (minV0 + maxV0) / 2f
+            val span = (maxV0 - minV0).coerceAtLeast(minSpan)
+            val lo = mid - span / 2f
+            val padY = 6.dp.toPx()
+            val h = size.height - padY * 2
+            val path = androidx.compose.ui.graphics.Path()
+            points.forEachIndexed { i, pt ->
+                val x = ((pt.timestamp - start).toFloat() / windowMs) * size.width
+                val y = padY + h - ((pt.value - lo) / span) * h
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            drawPath(
+                path = path,
+                color = lineColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+            )
+            val last = points.last()
+            drawCircle(
+                color = lineColor,
+                radius = 3.5.dp.toPx(),
+                center = androidx.compose.ui.geometry.Offset(
+                    ((last.timestamp - start).toFloat() / windowMs) * size.width,
+                    padY + h - ((last.value - lo) / span) * h
+                )
+            )
+        }
+        if (offsetMs > 0L) {
+            Text(
+                text = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(end)),
+                style = androidx.compose.ui.text.TextStyle(fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp)),
+                color = textColor.copy(alpha = 0.7f),
+                modifier = Modifier.align(Alignment.TopEnd)
+            )
         }
     }
 }
@@ -1182,7 +1285,8 @@ private fun HeroTrendWithDelta(
             androidx.compose.material3.Text(
                 text = rawText,
                 style = androidx.compose.ui.text.TextStyle(
-                    fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp),
+                    fontSize = androidx.compose.ui.unit.TextUnit(17f, androidx.compose.ui.unit.TextUnitType.Sp),
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     fontFeatureSettings = "tnum"
                 ),
                 color = contentColor.copy(alpha = 0.75f),

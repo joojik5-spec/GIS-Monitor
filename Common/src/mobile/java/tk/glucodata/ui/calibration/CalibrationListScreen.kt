@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -652,25 +653,20 @@ private fun MasterCalibrationCard(
         label = "masterCalibrationChevron"
     )
     val containerColor by animateColorAsState(
-        targetValue = if (isEnabled) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.74f)
-        else MaterialTheme.colorScheme.surfaceContainerLow,
+        targetValue = MaterialTheme.colorScheme.surfaceContainer,
         label = "calibrationMasterContainer"
     )
-    val expandedContainerColor = if (isEnabled) {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    }
+    val expandedContainerColor = MaterialTheme.colorScheme.surfaceContainer
 
     Card(
         modifier = Modifier
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(24.dp),
         border = BorderStroke(
             1.dp,
-            if (isEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.26f)
-            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+            if (isEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -857,11 +853,7 @@ private fun CalibrationAlgorithmCard(
     )
     val cardAlpha = if (isCalibrationEnabled) 1f else 0.62f
     val containerColor by animateColorAsState(
-        targetValue = if (isCalibrationEnabled) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.44f)
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
+        targetValue = MaterialTheme.colorScheme.surfaceContainer,
         label = "algorithmContainer"
     )
 
@@ -869,8 +861,9 @@ private fun CalibrationAlgorithmCard(
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer { alpha = cardAlpha },
-        shape = RoundedCornerShape(12.dp),
-        color = containerColor
+        shape = RoundedCornerShape(24.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
         Column {
             Row(
@@ -931,7 +924,7 @@ private fun CalibrationAlgorithmCard(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(if (isSelected) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSecondary)
+                                .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color.Transparent)
                                 .clickable { onSelectAlgorithm(algorithm) }
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -1321,10 +1314,11 @@ private fun CalibrationItemContent(
     val cardAlpha = if (cal.isEnabled) 1f else 0.6f
     
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = when {
-            isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-            !cal.isEnabled -> MaterialTheme.colorScheme.surfaceDim
+            isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.16f).compositeOver(MaterialTheme.colorScheme.surfaceContainer)
+            !cal.isEnabled -> MaterialTheme.colorScheme.surfaceContainerLow
             else -> MaterialTheme.colorScheme.surfaceContainer
         },
         modifier = Modifier.fillMaxWidth()
@@ -1462,8 +1456,6 @@ private fun FloatingActionToolbar(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.clear), style = MaterialTheme.typography.labelLarge)
             }
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
         }
 
         Button(
@@ -1472,7 +1464,7 @@ private fun FloatingActionToolbar(
             modifier = Modifier
                 .weight(1f)
                 .heightIn(min = 48.dp),
-            shapes = ButtonDefaults.shapes(shape = ConnectedButtonShapes.Trailing, pressedShape = ConnectedButtonShapes.TrailingPressed),
+            shapes = if (showClearAll) ButtonDefaults.shapes(shape = ConnectedButtonShapes.Trailing, pressedShape = ConnectedButtonShapes.TrailingPressed) else ButtonDefaults.shapes(),
             contentPadding = ButtonDefaults.ContentPadding,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -1482,7 +1474,7 @@ private fun FloatingActionToolbar(
         ) {
             Icon(Icons.Filled.WaterDrop, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.calibrate_action), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.calibrate_action), style = MaterialTheme.typography.titleMedium, maxLines = 1)
         }
     }
 }

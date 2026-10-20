@@ -973,7 +973,7 @@ private fun NavGraphBuilder.appDestinations(
 ) {
     composable("dashboard") {
         Box(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            Box(Modifier.fillMaxSize().statusBarsPadding().padding(top = 52.dp)) {
                 DashboardRoute(
                     dashboardViewModel = dashboardViewModel,
                     navController = navController,
@@ -982,11 +982,15 @@ private fun NavGraphBuilder.appDestinations(
             }
             // «+» вверху: добавить ещё один датчик (раздел «Датчики» убран из меню, всё начинается с главного экрана)
             androidx.compose.foundation.layout.Row(
-                modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd)
-                    .statusBarsPadding().padding(top = 6.dp, end = 12.dp),
+                modifier = Modifier.align(androidx.compose.ui.Alignment.TopStart).fillMaxWidth()
+                    .statusBarsPadding().padding(top = 6.dp, start = 16.dp, end = 12.dp),
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
             ) {
+                // закреплённая плашка датчика: не уезжает при прокрутке страницы
+                val pill = SensorPillHolder.data
+                if (pill != null) SensorPillBar(pill, Modifier.weight(1f).height(44.dp))
+                else androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
                 androidx.compose.material3.Text(
                     "Датчики",
                     fontSize = 20.sp,
