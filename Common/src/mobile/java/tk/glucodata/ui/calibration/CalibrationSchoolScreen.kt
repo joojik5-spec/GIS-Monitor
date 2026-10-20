@@ -258,7 +258,7 @@ fun CalibrationSchoolScreen(
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Калибровка из приложения GIS", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Замер можно ввести и в приложении GIS: он придёт сюда и учтётся так же, как введённый в Мониторе, " +
+                    "Замер можно ввести и в приложении GIS: он придёт сюда и учтётся так же, как введённый в GIS Monitor, " +
                         "а в AAPS и Nightscout уйдёт уже откалиброванное значение. " +
                         "Для этого включите приём ниже. По умолчанию он выключен, чтобы посторонние приложения не могли менять вашу калибровку.",
                     fontSize = 14.sp
