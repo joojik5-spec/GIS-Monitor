@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.runtime.mutableIntStateOf
@@ -476,22 +477,9 @@ fun DashboardCombinedHeader(
     }
     // Optional GDH-style traffic coloring of the value itself: green in
     // target range, yellow up to the alarm bounds, red beyond.
-    val heroValueColor = if (valueRangeColorsEnabled && isFreshData) {
-        val fallbackArgb = glucoseContentColor.toArgb()
-        remember(dvs?.primaryValue, isDark, isMmol, targetLow, targetHigh, veryLowThreshold, veryHighThreshold, fallbackArgb) {
-            Color(
-                GlucoseRangeColors.trafficColorForValue(
-                    dvs?.primaryValue ?: Float.NaN,
-                    targetLow,
-                    targetHigh,
-                    veryLowThreshold,
-                    veryHighThreshold,
-                    isDark,
-                    isMmol,
-                    fallbackArgb
-                )
-            )
-        }
+    val heroPrimary: Float = dvs?.primaryValue ?: Float.NaN
+    val heroValueColor = if (isFreshData && !heroPrimary.isNaN() && heroPrimary > 0f) {
+        remember(heroPrimary, isDark, isMmol) { gisRangeColor(heroPrimary, isMmol, isDark) }
     } else {
         glucoseContentColor
     }
@@ -850,10 +838,12 @@ fun DashboardCombinedHeader(
                                 isMmol = isMmol,
                                 lineColor = MaterialTheme.colorScheme.primary,
                                 textColor = glucoseContentColor,
+                                isDark = isDark,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(72.dp)
+                                    .height(86.dp)
                                     .padding(start = 14.dp)
+                                    .gisExtendEnd(resolvedEndPadding)
                             )
                         }
 
@@ -1201,12 +1191,39 @@ fun SensorPillBar(data: SensorPillData, modifier: Modifier = Modifier) {
  * Мини-график за час справа от числа: без осей и разделителей. Тянется пальцем по времени
  * (как нижний график), нажатие возвращает к текущему моменту.
  */
+/** Цвет сахара по международным диапазонам (ATTD/ADA): зелёный в норме, выше — жёлтый→оранжевый→красный, ниже — красный→бордовый. */
+internal fun gisRangeColor(value: Float, isMmol: Boolean, isDark: Boolean): Color {
+    val mmol = if (isMmol) value else value / 18.016f
+    fun mix(a: Int, b: Int, t: Float) = Color(androidx.core.graphics.ColorUtils.blendARGB(a, b, t.coerceIn(0f, 1f)))
+    val burgundy = if (isDark) 0xFFE5557F.toInt() else 0xFF8E1B3A.toInt()
+    val red = if (isDark) 0xFFFF6B6B.toInt() else 0xFFD32F2F.toInt()
+    val green = if (isDark) 0xFF5ED08A.toInt() else 0xFF1B8F4E.toInt()
+    val yellow = if (isDark) 0xFFFFD54F.toInt() else 0xFFC99A00.toInt()
+    val orange = if (isDark) 0xFFFFA040.toInt() else 0xFFE67E00.toInt()
+    val deepRed = if (isDark) 0xFFFF6B5A.toInt() else 0xFFC62828.toInt()
+    return when {
+        mmol < 3.0f -> mix(red, burgundy, (3.0f - mmol) / 0.8f)
+        mmol < 3.9f -> mix(red, red, 0f)
+        mmol <= 10.0f -> Color(green)
+        mmol <= 13.9f -> mix(yellow, orange, (mmol - 10.0f) / 3.9f)
+        else -> mix(orange, deepRed, (mmol - 13.9f) / 4f)
+    }
+}
+
+private fun Modifier.gisExtendEnd(extra: androidx.compose.ui.unit.Dp): Modifier = this.layout { measurable, c ->
+    val e = extra.roundToPx()
+    val w = c.maxWidth
+    val p = measurable.measure(c.copy(minWidth = w + e, maxWidth = w + e))
+    layout(w, p.height) { p.place(0, 0) }
+}
+
 @Composable
 private fun HeroMiniChart(
     history: List<GlucosePoint>,
     isMmol: Boolean,
     lineColor: Color,
     textColor: Color,
+    isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
     val windowMs = 60L * 60_000L
@@ -1217,7 +1234,8 @@ private fun HeroMiniChart(
     val end = newest - offsetMs.coerceIn(0L, maxOffset)
     val start = end - windowMs
     val points = remember(history, start, end) { history.filter { it.timestamp in start..end && it.value > 0f } }
-    Box(
+    val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
+    Column(
         modifier = modifier
             .pointerInput(maxOffset) {
                 detectHorizontalDragGestures { change, dx ->
@@ -1227,7 +1245,7 @@ private fun HeroMiniChart(
             }
             .pointerInput(Unit) { detectTapGestures { offsetMs = 0L } }
     ) {
-        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+        androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().weight(1f)) {
             if (points.size < 2) return@Canvas
             val minV0 = points.minOf { it.value }
             val maxV0 = points.maxOf { it.value }
@@ -1236,35 +1254,41 @@ private fun HeroMiniChart(
             val span = (maxV0 - minV0).coerceAtLeast(minSpan)
             val lo = mid - span / 2f
             val padY = 6.dp.toPx()
+            val r = 3.5.dp.toPx()
             val h = size.height - padY * 2
-            val path = androidx.compose.ui.graphics.Path()
-            points.forEachIndexed { i, pt ->
-                val x = ((pt.timestamp - start).toFloat() / windowMs) * size.width
-                val y = padY + h - ((pt.value - lo) / span) * h
-                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            val w = size.width - r
+            fun px(pt: GlucosePoint) = androidx.compose.ui.geometry.Offset(
+                ((pt.timestamp - start).toFloat() / windowMs) * w,
+                padY + h - ((pt.value - lo) / span) * h
+            )
+            // вертикальные засечки каждые 15 минут
+            for (i in 0..4) {
+                val x = w * i / 4f
+                drawLine(textColor.copy(alpha = 0.12f), androidx.compose.ui.geometry.Offset(x, 0f), androidx.compose.ui.geometry.Offset(x, size.height), 1.dp.toPx())
             }
-            drawPath(
-                path = path,
-                color = lineColor,
-                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
-            )
-            val last = points.last()
-            drawCircle(
-                color = lineColor,
-                radius = 3.5.dp.toPx(),
-                center = androidx.compose.ui.geometry.Offset(
-                    ((last.timestamp - start).toFloat() / windowMs) * size.width,
-                    padY + h - ((last.value - lo) / span) * h
+            for (i in 1 until points.size) {
+                val a = px(points[i - 1]); val b = px(points[i])
+                if (points[i].timestamp - points[i - 1].timestamp > 20 * 60_000L) continue
+                drawLine(
+                    color = gisRangeColor(points[i].value, isMmol, isDark),
+                    start = a, end = b,
+                    strokeWidth = 2.8.dp.toPx(),
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round
                 )
-            )
+            }
+            val last = points.last()
+            drawCircle(color = gisRangeColor(last.value, isMmol, isDark), radius = r, center = px(last))
         }
-        if (offsetMs > 0L) {
-            Text(
-                text = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(end)),
-                style = androidx.compose.ui.text.TextStyle(fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp)),
-                color = textColor.copy(alpha = 0.7f),
-                modifier = Modifier.align(Alignment.TopEnd)
-            )
+        Row(Modifier.fillMaxWidth().padding(end = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            for (i in 0..4) {
+                Text(
+                    text = fmt.format(java.util.Date(start + windowMs * i / 4)),
+                    style = androidx.compose.ui.text.TextStyle(fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp), fontFeatureSettings = "tnum"),
+                    color = textColor.copy(alpha = if (offsetMs > 0L && i == 4) 0.95f else 0.6f),
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
         }
     }
 }

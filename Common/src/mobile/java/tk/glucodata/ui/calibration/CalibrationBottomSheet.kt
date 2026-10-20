@@ -545,12 +545,16 @@ fun CalibrationBottomSheet(
     }
 }
 
-/** Выбор времени замера: быстрые кнопки, день стрелками, крупное время и шаги по часу и по 5 минут. Без прокрутки и ввода. */
+/**
+ * Выбор времени замера: быстрые кнопки, день стрелками и две плашки «часы : минуты» со стрелками.
+ * Шаг один час и одна минута; стрелку можно держать (значения бегут), плашку можно листать свайпом.
+ */
 @Composable
 fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
     val nowMs = System.currentTimeMillis()
     fun set(ms: Long) = onChange(ms.coerceIn(nowMs - 7L * 86_400_000L, nowMs))
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    fun shifted(field: Int, amount: Int): Long = Calendar.getInstance().apply { timeInMillis = selected; add(field, amount) }.timeInMillis
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Сейчас" to 0, "15 мин назад" to 15, "30 мин" to 30, "1 час" to 60, "2 часа" to 120, "3 часа" to 180).forEach { (name, min) ->
                 FilterChip(
@@ -561,7 +565,7 @@ fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            FilledTonalIconButton(onClick = { set(Calendar.getInstance().apply { timeInMillis = selected; add(Calendar.DAY_OF_YEAR, -1) }.timeInMillis) }) { Text("\u2039", fontSize = 24.sp) }
+            FilledTonalIconButton(onClick = { set(shifted(Calendar.DAY_OF_YEAR, -1)) }) { Text("\u2039", fontSize = 24.sp) }
             val dayFmt = SimpleDateFormat("yyyyDDD", Locale.US)
             val dayWord = when (dayFmt.format(Date(selected))) {
                 dayFmt.format(Date(nowMs)) -> "Сегодня"
@@ -570,28 +574,78 @@ fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
             }
             val dateText = SimpleDateFormat("d MMMM", Locale.getDefault()).format(Date(selected))
             Text(if (dayWord != null) "$dayWord, $dateText" else dateText, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-            FilledTonalIconButton(onClick = { set(Calendar.getInstance().apply { timeInMillis = selected; add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis) }) { Text("\u203A", fontSize = 24.sp) }
+            FilledTonalIconButton(onClick = { set(shifted(Calendar.DAY_OF_YEAR, 1)) }) { Text("\u203A", fontSize = 24.sp) }
         }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            val c = Calendar.getInstance().apply { timeInMillis = selected }
+            TimeWheel(
+                text = String.format(Locale.getDefault(), "%02d", c.get(Calendar.HOUR_OF_DAY)),
+                onUp = { set(shifted(Calendar.HOUR_OF_DAY, 1)) },
+                onDown = { set(shifted(Calendar.HOUR_OF_DAY, -1)) }
+            )
+            Text(":", fontSize = 40.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp))
+            TimeWheel(
+                text = String.format(Locale.getDefault(), "%02d", c.get(Calendar.MINUTE)),
+                onUp = { set(shifted(Calendar.MINUTE, 1)) },
+                onDown = { set(shifted(Calendar.MINUTE, -1)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimeWheel(text: String, onUp: () -> Unit, onDown: () -> Unit) {
+    val up by androidx.compose.runtime.rememberUpdatedState(onUp)
+    val down by androidx.compose.runtime.rememberUpdatedState(onDown)
+    var acc by remember { mutableStateOf(0f) }
+    Column(
+        modifier = Modifier.width(96.dp).pointerInput(Unit) {
+            detectVerticalDragGestures(onDragEnd = { acc = 0f }) { change, dy ->
+                change.consume()
+                acc += dy
+                while (acc > 26f) { acc -= 26f; down() }
+                while (acc < -26f) { acc += 26f; up() }
+            }
+        },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        HoldArrow(Icons.Default.KeyboardArrowUp) { up() }
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(68.dp)
         ) {
-            Text(
-                SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(selected)),
-                fontSize = 44.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)
-            )
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("\u22121 ч" to -60, "\u22125 мин" to -5, "+5 мин" to 5, "+1 ч" to 60).forEach { (name, dm) ->
-                FilledTonalButton(
-                    onClick = { set(selected + dm * 60_000L) },
-                    modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
-                ) { Text(name, fontSize = 14.sp, maxLines = 1) }
+            Box(contentAlignment = Alignment.Center) {
+                Text(text, fontSize = 40.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
             }
         }
+        HoldArrow(Icons.Default.KeyboardArrowDown) { down() }
+    }
+}
+
+/** Стрелка с повтором: одно нажатие — один шаг, удержание — значения бегут. */
+@Composable
+private fun HoldArrow(icon: androidx.compose.ui.graphics.vector.ImageVector, action: () -> Unit) {
+    val act by androidx.compose.runtime.rememberUpdatedState(action)
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = Modifier.size(width = 64.dp, height = 36.dp).pointerInput(Unit) {
+            androidx.compose.foundation.gestures.detectTapGestures(onPress = {
+                act()
+                val job = scope.launch {
+                    kotlinx.coroutines.delay(380)
+                    while (true) { act(); kotlinx.coroutines.delay(70) }
+                }
+                tryAwaitRelease()
+                job.cancel()
+            })
+        }
+    ) {
+        Box(contentAlignment = Alignment.Center) { Icon(icon, contentDescription = null) }
     }
 }
 
