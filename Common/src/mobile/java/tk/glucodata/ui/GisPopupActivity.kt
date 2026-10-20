@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 class GisPopupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        runCatching { tk.glucodata.getlibrary.getlibrary(this) }
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         window.setDimAmount(0.55f)
