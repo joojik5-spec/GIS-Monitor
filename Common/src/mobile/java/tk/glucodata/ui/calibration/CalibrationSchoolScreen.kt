@@ -13,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -20,12 +22,24 @@ import kotlin.coroutines.resume
 
 /** «Школа калибровки» GIS Monitor: простыми словами, когда и как калибровать, плюс состояние текущего датчика. */
 @Composable
-fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: (tk.glucodata.ui.CalibrationSheetState) -> Unit = {}) {
+fun CalibrationSchoolScreen(
+    navController: NavController,
+    onTriggerCalibration: (tk.glucodata.ui.CalibrationSheetState) -> Unit = {},
+    dashboardViewModel: tk.glucodata.ui.viewmodel.DashboardViewModel
+) {
     val ctx = LocalContext.current
     val start = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE).getLong("start", 0L)
     val hours = if (start > 0) (System.currentTimeMillis() - start) / 3_600_000.0 else -1.0
     val sp0 = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
-    val trend = sp0.getInt("trend", 0)
+    // То же правило, что в окне калибровки: «условия оптимальные», если скорость изменения сахара меньше 1.0.
+    val history by dashboardViewModel.glucoseHistory.collectAsStateWithLifecycle()
+    val unitValue by dashboardViewModel.unit.collectAsStateWithLifecycle()
+    val viewModeValue by dashboardViewModel.viewMode.collectAsStateWithLifecycle()
+    val isMmolNow = tk.glucodata.ui.util.GlucoseFormatter.isMmol(unitValue)
+    val velocity = androidx.compose.runtime.remember(history, isMmolNow, viewModeValue) {
+        tk.glucodata.logic.TrendEngine.calculateTrend(history, useRaw = viewModeValue == 1 || viewModeValue == 3, isMmol = isMmolNow).velocity
+    }
+    val unstable = Math.abs(velocity) >= 1.0f
     val lastTs = sp0.getLong("ts", 0L)
     val stale = lastTs > 0L && System.currentTimeMillis() - lastTs > 15 * 60_000L
     val (title, text) = when {
@@ -37,10 +51,10 @@ fun CalibrationSchoolScreen(navController: NavController, onTriggerCalibration: 
         hours < 24 -> "Сейчас калибровать нельзя" to "Датчику ${Math.round(hours)} ч. Первые сутки он привыкает к коже, значения плавают. Подождите ещё ${Math.ceil(24 - hours).toInt()} ч."
         hours < 48 -> "Лучше подождать" to "Датчику ${Math.round(hours)} ч. Калибровка возможна, но точнее будет после 48 часов."
         stale -> "Нет свежих данных" to "Последнее значение пришло больше 15 минут назад. Дождитесь новых показаний."
-        trend != 0 -> "Сейчас лучше не калибровать" to "Сахар ${if (trend > 0) "растёт" else "падает"}: замер сейчас даст неточную калибровку. Дождитесь ровной линии без стрелок, обычно это 15–20 минут."
-        else -> "Можно калибровать" to "Датчик «устоялся», сахар ровный. Сделайте замер глюкометром и введите его в калибровках."
+        unstable -> "Подождите ~15 минут (нестабильно)" to "Сахар ${if (velocity > 0) "растёт" else "падает"}: замер сейчас даст неточную калибровку. Дождитесь ровной линии без стрелок."
+        else -> "Условия оптимальные" to "Датчик «устоялся», сахар ровный. Сделайте замер глюкометром и введите его в калибровках."
     }
-    val ok = (hours >= 48 || hours < 0 && sp0.contains("ts")) && !stale && trend == 0
+    val ok = (hours >= 48 || hours < 0 && sp0.contains("ts")) && !stale && !unstable
     Column(
         Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)

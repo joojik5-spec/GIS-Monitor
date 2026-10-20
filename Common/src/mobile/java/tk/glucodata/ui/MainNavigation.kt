@@ -1015,7 +1015,7 @@ private fun NavGraphBuilder.appDestinations(
             onTriggerCalibration = onTriggerCalibration,
         )
     }
-    composable("school") { tk.glucodata.ui.calibration.CalibrationSchoolScreen(navController, onTriggerCalibration) }
+    composable("school") { tk.glucodata.ui.calibration.CalibrationSchoolScreen(navController, onTriggerCalibration, dashboardViewModel) }
     composable("stats") { FontScaleCap { tk.glucodata.ui.stats.StatsScreen() } }
     composable("sensors") {
         SensorScreen(
