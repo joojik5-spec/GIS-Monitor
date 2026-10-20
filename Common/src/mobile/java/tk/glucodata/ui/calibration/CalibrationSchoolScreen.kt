@@ -8,6 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -64,9 +67,10 @@ fun CalibrationSchoolScreen(
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         val raw = sp.getFloat("raw", 0f).toDouble(); val cal = if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
         // Ваши калибровки: только включённые, сделанные уже на этом датчике.
-        val userCals = remember(start) {
-            tk.glucodata.data.calibration.CalibrationManager.getCachedCalibrations().filter { it.isEnabled && (start <= 0L || it.timestamp >= start) }
-        }
+        val allCals by tk.glucodata.data.calibration.CalibrationManager.getCalibrationsFlow()
+            .collectAsStateWithLifecycle(initialValue = tk.glucodata.data.calibration.CalibrationManager.getCachedCalibrations())
+        val userCals = allCals.filter { it.isEnabled && (start <= 0L || it.timestamp >= start) }
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
         val hasUserCal = userCals.isNotEmpty()
         val mmol = tk.glucodata.Applic.unit == 1
         val k = if (mmol) 18.0182 else 1.0
@@ -89,11 +93,20 @@ fun CalibrationSchoolScreen(
                         "Сырой сигнал: ${f(raw)} · " + (if (hasUserCal) "после калибровки" else "показание датчика") + ": ${f(cal ?: raw)}",
                         fontSize = 14.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    val last = userCals.maxByOrNull { it.timestamp }
-                    if (last != null) {
-                        val t = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(last.timestamp))
+                    if (userCals.isNotEmpty()) {
+                        Text("Ваши калибровки на этом датчике", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Это замеры глюкометра, которые были сохранены (здесь или из GIS). Если вы их не вводили, удалите.",
+                            fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         fun u(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
-                        Text("Последняя калибровка $t: было ${u(last.sensorValue)} → глюкометр ${u(last.userValue)}", fontSize = 14.sp)
+                        userCals.sortedByDescending { it.timestamp }.take(3).forEach { c ->
+                            val t = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(c.timestamp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                Text("$t · датчик ${u(c.sensorValue)} → глюкометр ${u(c.userValue)}", fontSize = 14.sp, modifier = Modifier.weight(1f))
+                                TextButton(onClick = { scope.launch { tk.glucodata.data.calibration.CalibrationManager.deleteCalibration(c) } }) { Text("Удалить") }
+                            }
+                        }
                     }
                 }
             }
@@ -103,7 +116,7 @@ fun CalibrationSchoolScreen(
         val sensorEnd = sp.getLong("end", 0L)
         Card(shape = cardShape, border = cardBorder) {
             Column(Modifier.padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(sp.getString("name", "Датчик") ?: "Датчик", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text((sp.getString("name", "Датчик") ?: "Датчик").let { if (it == "Sensor") "Датчик" else it }, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 val totalDays = if (start > 0 && sensorEnd > start) ((sensorEnd - start) / 86_400_000L).toInt() else 0
                 val day = if (start > 0) (hours / 24).toInt() + 1 else 0
                 Text(
@@ -125,10 +138,57 @@ fun CalibrationSchoolScreen(
                 Text("Калибровка", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 Text("Сравните с глюкометром и введите его число.", fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 MeterPhotoButton(onTriggerCalibration)
-                Text(
-                    "Время: " + java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date()) + " (сейчас)",
-                    fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary
-                )
+                val whenMs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) } // null = «сейчас»
+                val expanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                val nowMs = System.currentTimeMillis()
+                val shownMs = whenMs.value ?: nowMs
+                fun cal() = java.util.Calendar.getInstance().apply { timeInMillis = shownMs }
+                fun setTime(ms: Long) { whenMs.value = ms.coerceIn(nowMs - 7L * 86_400_000L, nowMs) }
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp)).clickable { expanded.value = !expanded.value }.padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Время: " + java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(shownMs)),
+                                fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f)
+                            )
+                            if (whenMs.value != null) {
+                                TextButton(onClick = { whenMs.value = null }) { Text("Сейчас") }
+                            }
+                            Text(if (expanded.value) "\u25B4" else "\u25BE", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                        }
+                        androidx.compose.animation.AnimatedVisibility(visible = expanded.value) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                WheelColumn(
+                                    "Дата", java.text.SimpleDateFormat("d MMM", java.util.Locale.getDefault()).format(java.util.Date(shownMs)),
+                                    onUp = { setTime(cal().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }.timeInMillis) },
+                                    onDown = { setTime(cal().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }.timeInMillis) }
+                                )
+                                WheelColumn(
+                                    "Часы", String.format(java.util.Locale.US, "%02d", cal().get(java.util.Calendar.HOUR_OF_DAY)),
+                                    onUp = { setTime(cal().apply { roll(java.util.Calendar.HOUR_OF_DAY, 1) }.timeInMillis) },
+                                    onDown = { setTime(cal().apply { roll(java.util.Calendar.HOUR_OF_DAY, -1) }.timeInMillis) }
+                                )
+                                WheelColumn(
+                                    "Минуты", String.format(java.util.Locale.US, "%02d", cal().get(java.util.Calendar.MINUTE)),
+                                    onUp = { setTime(cal().apply { roll(java.util.Calendar.MINUTE, 1) }.timeInMillis) },
+                                    onDown = { setTime(cal().apply { roll(java.util.Calendar.MINUTE, -1) }.timeInMillis) }
+                                )
+                            }
+                        }
+                        if (!expanded.value) {
+                            Text("Нажмите, чтобы выбрать дату и время колесом", fontSize = 12.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
                 val step = if (mmol) 0.1f else 1f
                 val entry = androidx.compose.runtime.remember {
                     androidx.compose.runtime.mutableStateOf(if (raw > 0) (Math.round(((cal ?: raw) / k) * 10.0) / 10.0).toFloat() else 0f)
@@ -157,14 +217,16 @@ fun CalibrationSchoolScreen(
                         modifier = Modifier.padding(16.dp), fontSize = 16.sp, color = badgeColor
                     )
                 }
-                val scope = androidx.compose.runtime.rememberCoroutineScope()
                 Button(
                     onClick = {
                         val v = entry.value
-                        val auto = ((cal ?: raw) / k).toFloat()
-                        val rawDisplay = (raw / k).toFloat()
+                        val ts = whenMs.value ?: System.currentTimeMillis()
+                        // Показание датчика на момент замера: ближайшая точка истории (в пределах 10 минут), иначе текущее.
+                        val near = history.minByOrNull { Math.abs(it.timestamp - ts) }?.takeIf { Math.abs(it.timestamp - ts) <= 10 * 60_000L }
+                        val auto = near?.value ?: ((cal ?: raw) / k).toFloat()
+                        val rawDisplay = near?.rawValue?.takeIf { it > 0f } ?: (raw / k).toFloat()
                         scope.launch {
-                            val added = tk.glucodata.data.calibration.CalibrationManager.addCalibration(System.currentTimeMillis(), auto, rawDisplay, v, null, false)
+                            val added = tk.glucodata.data.calibration.CalibrationManager.addCalibration(ts, auto, rawDisplay, v, null, false)
                             android.widget.Toast.makeText(ctx, if (added) "Калибровка добавлена: было ${fmt(auto)} → глюкометр ${fmt(v)}" else "Не удалось добавить калибровку", android.widget.Toast.LENGTH_LONG).show()
                         }
                     },
@@ -314,3 +376,31 @@ private suspend fun readMeter(file: java.io.File, mmol: Boolean): Float? = try {
     } } }
     best?.let { if (mmol) it.first else it.first * 18.0182f }
 } catch (t: Throwable) { null }
+
+/** Колонка-«колесо»: стрелки сверху и снизу, значение в центре, листается и свайпом вверх/вниз. */
+@Composable
+private fun WheelColumn(label: String, text: String, onUp: () -> Unit, onDown: () -> Unit) {
+    var acc by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0f) }
+    val upNow by androidx.compose.runtime.rememberUpdatedState(onUp)
+    val downNow by androidx.compose.runtime.rememberUpdatedState(onDown)
+    Column(
+        modifier = Modifier.pointerInput(Unit) {
+            detectVerticalDragGestures(onDragEnd = { acc = 0f }) { _, dy ->
+                acc += dy
+                while (acc > 36f) { acc -= 36f; downNow() }
+                while (acc < -36f) { acc += 36f; upNow() }
+            }
+        },
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FilledTonalIconButton(onClick = onUp) { Icon(androidx.compose.material.icons.Icons.Filled.KeyboardArrowUp, contentDescription = "Больше") }
+        Surface(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+        ) { Text(text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) }
+        FilledTonalIconButton(onClick = onDown) { Icon(androidx.compose.material.icons.Icons.Filled.KeyboardArrowDown, contentDescription = "Меньше") }
+    }
+}

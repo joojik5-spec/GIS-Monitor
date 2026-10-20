@@ -16,6 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -387,17 +391,27 @@ fun CalibrationBottomSheet(
                             LaunchedEffect(selectedTimestamp) {
                                 calendar.timeInMillis = selectedTimestamp
                             }
-                            val minuteFocusRequester = remember { FocusRequester() }
-                            // Delayed focus
-                            LaunchedEffect(Unit) {
-                                delay(150)
-                                minuteFocusRequester.requestFocus()
-                            }
-
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
+                                WheelPlate(
+                                    text = SimpleDateFormat("d MMM", Locale.getDefault()).format(Date(selectedTimestamp)),
+                                    onUp = {
+                                        calendar.timeInMillis = selectedTimestamp
+                                        calendar.add(Calendar.DAY_OF_YEAR, 1)
+                                        selectedTimestamp = minOf(calendar.timeInMillis, System.currentTimeMillis())
+                                    },
+                                    onDown = {
+                                        calendar.timeInMillis = selectedTimestamp
+                                        calendar.add(Calendar.DAY_OF_YEAR, -1)
+                                        selectedTimestamp = calendar.timeInMillis
+                                    },
+                                    width = 120.dp
+                                )
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
                                 CustomTimeField(
                                     value = calendar.get(Calendar.HOUR_OF_DAY),
                                     range = 0..23,
@@ -420,8 +434,7 @@ fun CalibrationBottomSheet(
                                     onValueChange = { m ->
                                         calendar.set(Calendar.MINUTE, m)
                                         selectedTimestamp = calendar.timeInMillis
-                                    },
-                                    focusRequester = minuteFocusRequester
+                                    }
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
@@ -585,66 +598,45 @@ fun CustomTimeField(
     onValueChange: (Int) -> Unit,
     focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
-    var text by remember { mutableStateOf(TextFieldValue(String.format(Locale.getDefault(), "%02d", value))) }
-    var isFocused by remember { mutableStateOf(false) }
+    // «Колесо»: стрелки сверху и снизу, листается и свайпом вверх/вниз; после последнего значения идёт первое.
+    WheelPlate(
+        text = String.format(Locale.getDefault(), "%02d", value),
+        onUp = { onValueChange(if (value >= range.last) range.first else value + 1) },
+        onDown = { onValueChange(if (value <= range.first) range.last else value - 1) }
+    )
+}
 
-    val interactionSource = remember { MutableInteractionSource() }
-
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collectLatest { interaction ->
-            if (interaction is PressInteraction.Release) {
-                delay(50)
-                text = text.copy(selection = TextRange(0, text.text.length))
+@Composable
+fun WheelPlate(text: String, onUp: () -> Unit, onDown: () -> Unit, width: androidx.compose.ui.unit.Dp = 96.dp) {
+    var acc by remember { mutableStateOf(0f) }
+    val up by androidx.compose.runtime.rememberUpdatedState(onUp)
+    val down by androidx.compose.runtime.rememberUpdatedState(onDown)
+    Column(
+        modifier = Modifier.pointerInput(Unit) {
+            detectVerticalDragGestures(onDragEnd = { acc = 0f }) { _, dy ->
+                acc += dy
+                while (acc > 40f) { acc -= 40f; down() }
+                while (acc < -40f) { acc += 40f; up() }
+            }
+        },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        IconButton(onClick = { up() }) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Больше") }
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.width(width).height(96.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text,
+                    style = MaterialTheme.typography.displayMediumEmphasized,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
             }
         }
-    }
-
-    LaunchedEffect(value) {
-        // Update text if external value mismatch, even if focused
-        val parsed = text.text.toIntOrNull()
-        if (parsed != value) {
-            text = TextFieldValue(String.format(Locale.getDefault(), "%02d", value))
-        }
-    }
-
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.width(96.dp).height(112.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            BasicTextField(
-                value = text,
-                onValueChange = { newText ->
-                    val s = newText.text
-                    if (s.length <= 2) {
-                        text = newText
-                        val num = s.toIntOrNull()
-                        if (num != null && num in range) {
-                            onValueChange(num)
-                        }
-                    }
-                },
-                textStyle = MaterialTheme.typography.displayMediumEmphasized.copy(
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                interactionSource = interactionSource,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { state ->
-                        isFocused = state.isFocused
-                        if (state.isFocused) {
-                            text = text.copy(selection = TextRange(0, text.text.length))
-                        } else {
-                            text = TextFieldValue(String.format(Locale.getDefault(), "%02d", value))
-                        }
-                    }
-            )
-        }
+        IconButton(onClick = { down() }) { Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Меньше") }
     }
 }
 
