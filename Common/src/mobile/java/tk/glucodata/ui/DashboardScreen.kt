@@ -1804,6 +1804,9 @@ fun DashboardScreen(
                                 deltaIntervalMinutes = deltaIntervalMinutes,
                                 arrowForecastColorsEnabled = glucoseArrowForecastEnabled,
                                 quietWindowUntilMs = quietWindowUntilMs,
+                                belowHero = if (showPinnedStats) {
+                                    { FontScaleCap { tk.glucodata.ui.stats.PinnedStatsStrip(rows = 2, windowState = pinnedStatsWindow) } }
+                                } else null,
                                 onQuietWindowClick = onNavigateToQuietWindow,
                                 onHeroClick = {
                                     val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
@@ -1978,24 +1981,6 @@ fun DashboardScreen(
                         }
                     }
 
-                    // Shares the chart's item on purpose: the range chips are the last
-                    // thing inside it, so a separate item would put a full
-                    // `dashboardItemSpacing` between the chips and this strip.
-                    if (showPinnedStats) {
-                        FontScaleCap {
-                            tk.glucodata.ui.stats.PinnedStatsStrip(
-                                modifier = Modifier.padding(
-                                    start = contentHorizontalPadding,
-                                    end = contentHorizontalPadding,
-                                    // Between the two extremes: a separate lazy item put a
-                                    // full 12 dp here and read as a hole, 2 dp had the strip
-                                    // welded to the chart card once the chart collapses.
-                                    top = 8.dp
-                                ),
-                                windowState = pinnedStatsWindow
-                            )
-                        }
-                    }
 }
 
 

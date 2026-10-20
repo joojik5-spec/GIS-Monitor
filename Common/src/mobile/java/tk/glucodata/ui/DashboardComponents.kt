@@ -255,7 +255,9 @@ fun DashboardCombinedHeader(
     // The alarm quiet window: 0 = none, and then nothing is drawn. A running one
     // shows as a chip with its end time; tapping it opens the quiet-window screen.
     quietWindowUntilMs: Long = 0L,
-    onQuietWindowClick: () -> Unit = {}
+    onQuietWindowClick: () -> Unit = {},
+    // Слот под карточкой сахара: сюда экран кладёт показатели («Сегодня», TIR и т. д.)
+    belowHero: (@Composable () -> Unit)? = null
 ) {
     // Determine Colors based on logic
     // Glucose: primary tonal surface with a very light range tint when fresh data is out of range.
@@ -807,7 +809,7 @@ fun DashboardCombinedHeader(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             DashboardHeroValueCluster(
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f, fill = false),
                                 primaryText = primaryText,
                                 secondaryText = secondaryText,
                                 tertiaryText = tertiaryText,
@@ -1086,6 +1088,55 @@ fun DashboardCombinedHeader(
         }
     }
 
+    // Узкая округлая плашка датчика: имя и срок жизни в одну строку, заливка показывает, сколько прошло
+    val sensorPill: @Composable (Modifier) -> Unit = { modifier ->
+        Card(
+            modifier = modifier,
+            colors = CardDefaults.cardColors(containerColor = sensorContainerColor, contentColor = sensorContentColor),
+            border = androidx.compose.foundation.BorderStroke(1.dp, sensorContentColor.copy(alpha = 0.16f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(50)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (sensorProgress > 0f) {
+                    val fillColor = when {
+                        sensorProgress > 0.95f -> MaterialTheme.colorScheme.error
+                        sensorProgress > 0.80f -> MaterialTheme.colorScheme.tertiary
+                        else -> StatusPalette.sensorLifeFill
+                    }
+                    Box(Modifier.fillMaxHeight().fillMaxWidth(sensorProgress).background(fillColor.copy(alpha = 0.25f)))
+                }
+                val pillLifecycle = if (sensorHoursRemaining in 0L..24L) "$sensorHoursRemaining" + "ч" else daysRemaining
+                val pillStatusOnly = shouldShowDashboardSensorStatus(
+                    isCloneSource = isCloneSource,
+                    isFreshData = isFreshData,
+                    sensorStatus = sensorStatus,
+                    heroOwnsAwaitingStatus = resolvedDataState.isAwaitingData && statusCopy != null && pillLifecycle.isNotEmpty(),
+                )
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = sensorDisplayName.ifEmpty { "Датчик" },
+                        style = MaterialTheme.typography.titleSmall,
+                        color = sensorContentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = if (pillStatusOnly) sensorStatus else pillLifecycle,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = sensorContentColor.copy(alpha = 0.85f),
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+    }
+
     if (isLandscape) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -1095,22 +1146,10 @@ fun DashboardCombinedHeader(
             sensorCard(Modifier.fillMaxWidth())
         }
     } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(androidx.compose.foundation.layout.IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            heroCard(
-                Modifier
-                    .weight(0.7f)
-                    .fillMaxHeight()
-            )
-            sensorCard(
-                Modifier
-                    .weight(0.3f)
-                    .fillMaxHeight()
-            )
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            sensorPill(Modifier.fillMaxWidth().height(48.dp))
+            heroCard(Modifier.fillMaxWidth())
+            belowHero?.invoke()
         }
     }
 }
@@ -1126,8 +1165,8 @@ private fun HeroTrendWithDelta(
     delta5Text: String? = null
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        HeroDeltaMini("1м", delta1Text)
-        HeroDeltaMini("5м", delta5Text)
+        HeroDeltaMini("1м", delta1Text, contentColor)
+        HeroDeltaMini("5м", delta5Text, contentColor)
         tk.glucodata.ui.components.TrendIndicator(
             trendResult = trendResult,
             modifier = Modifier.size(iconSize),
@@ -1139,9 +1178,9 @@ private fun HeroTrendWithDelta(
     }
 }
 
-/** Одна мелкая белая строка «1м ▲0.4»: за какой интервал, куда и на сколько изменился сахар. */
+/** Одна мелкая строка в цвете текста карточки (тёмная на светлой теме, светлая на тёмной) «1м ▲0.4»: за какой интервал, куда и на сколько изменился сахар. */
 @Composable
-private fun HeroDeltaMini(label: String, text: String?) {
+private fun HeroDeltaMini(label: String, text: String?, color: Color) {
     if (text.isNullOrEmpty()) return
     val t = text.trim()
     val triangle = when {
@@ -1156,7 +1195,7 @@ private fun HeroDeltaMini(label: String, text: String?) {
             fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp),
             fontFeatureSettings = "tnum"
         ),
-        color = Color.White,
+        color = color.copy(alpha = 0.9f),
         softWrap = false,
         maxLines = 1
     )
