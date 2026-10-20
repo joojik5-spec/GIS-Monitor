@@ -50,7 +50,11 @@ jobs:
         run: |
           f=$(find . -path "*/build/outputs/apk/*" -name "*.apk" | head -1)
           mkdir -p "$RUNNER_TEMP/apk"; cp "$f" "$RUNNER_TEMP/apk/gis-monitor.apk"
-          cd "$RUNNER_TEMP/apk"; git init -q; git checkout -q -b monitor-apk; git add gis-monitor.apk
+          cd "$RUNNER_TEMP/apk"
+          N=${{ github.run_number }}
+          SZ=$(stat -c %s gis-monitor.apk); SHA=$(sha256sum gis-monitor.apk | cut -d' ' -f1)
+          printf '{"schema":1,"versionName":"1.2.5-GIS.%s","versionCode":%s,"minSdk":0,"notes":"Сборка %s","artifacts":[{"applicationId":"com.gismonitor","file":"gis-monitor.apk","size":%s,"sha256":"%s","url":"gis-monitor.apk"}]}\n' "$N" "$((1025+N))" "${GITHUB_SHA::7}" "$SZ" "$SHA" > update-manifest.json
+          git init -q; git checkout -q -b monitor-apk; git add gis-monitor.apk update-manifest.json
           git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "APK for ${GITHUB_SHA}"
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" monitor-apk
       - name: Релиз для автообновлений
@@ -59,7 +63,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           f=$(find . -path "*/build/outputs/apk/*" -name "JugglucoNG-*.apk" | head -1)
-          tag="v1.2.5-gis.${{ github.run_number }}"
+          tag="v1.2.5-GIS.${{ github.run_number }}"
           gh release create "$tag" "$f" --repo "${{ github.repository }}" --target "$GITHUB_SHA" --title "GIS Monitor ${{ github.run_number }}" --notes "Автоматическая сборка ${GITHUB_SHA::7}"
 
   emu:

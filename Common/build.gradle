@@ -14,7 +14,7 @@ ext {
     appVersionCode = 1025 + gisBuild
     // Base version, without the flavour/build-type suffix chain that gets appended
     // to versionName. Used for the APK filename so it stays readable.
-    appVersionName = gisBuild > 0 ? "1.2.5-gis.${gisBuild}" : '1.2.5-gis.0'
+    appVersionName = gisBuild > 0 ? "1.2.5-GIS.${gisBuild}" : '1.2.5-GIS.0'
 
     ndkver       = '29.0.14206865'
     CMAKEVERSION = '4.1.2'

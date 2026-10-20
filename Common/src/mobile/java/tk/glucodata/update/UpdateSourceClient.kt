@@ -70,7 +70,30 @@ object UpdateSourceClient {
         return verdictFor(update)
     }
 
+    private val API_REPO = Regex("^https://api\\.github\\.com/repos/([^/]+)/([^/]+)/releases")
+
+    /**
+     * Сначала читаем манифест из ветки monitor-apk через raw.githubusercontent.com: у него нет
+     * жёсткого лимита, как у API (60 запросов в час на адрес, а через VPN адрес общий). Если
+     * манифеста нет или он недоступен — обычный путь через список релизов.
+     */
     private fun checkGithub(apiUrl: String): UpdateCheckResult {
+        API_REPO.find(apiUrl)?.let { m ->
+            val (owner, repo) = m.destructured
+            val rawUrl = "https://raw.githubusercontent.com/$owner/$repo/monitor-apk/update-manifest.json"
+            val response = getText(rawUrl, accept = "application/json")
+            if (response is TextResponse.Ok) {
+                val manifest = GithubReleaseParser.parseManifest(response.body)
+                val update = manifest?.let {
+                    GithubReleaseParser.fromManifest(it, rawUrl, BuildConfig.APPLICATION_ID, Build.VERSION.SDK_INT)
+                }
+                if (update != null && isDownloadableUrl(update.artifact.downloadUrl)) return verdictFor(update)
+            }
+        }
+        return checkGithubApi(apiUrl)
+    }
+
+    private fun checkGithubApi(apiUrl: String): UpdateCheckResult {
         val separator = if (apiUrl.contains('?')) "&" else "?"
         val body = when (val response = getText(
             url = "$apiUrl${separator}per_page=$MAX_RELEASES",
