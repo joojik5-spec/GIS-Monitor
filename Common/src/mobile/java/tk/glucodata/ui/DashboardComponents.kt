@@ -123,6 +123,7 @@ import tk.glucodata.Applic
 import tk.glucodata.CurrentDisplaySource
 import tk.glucodata.DisplayDataState
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.nativeCanvas
 import tk.glucodata.GlucoseRangeColors
 import tk.glucodata.TrendProjection
 import tk.glucodata.Notify
