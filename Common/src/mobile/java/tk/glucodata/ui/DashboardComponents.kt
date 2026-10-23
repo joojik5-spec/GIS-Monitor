@@ -806,14 +806,14 @@ fun DashboardCombinedHeader(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .heightIn(min = heroContentMinHeight)
+                            .heightIn(min = heroContentMinHeight + 150.dp)
                             .padding(
-                                start = resolvedStartPadding,
+                                start = resolvedStartPadding + 22.dp,
                                 end = resolvedEndPadding,
                                 top = resolvedVerticalPadding,
                                 bottom = resolvedVerticalPadding
                             ),
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         // Изменение за 1 и 5 минут: мелко, в левом верхнем углу карточки
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1127,7 +1127,7 @@ fun DashboardCombinedHeader(
         }
     }
 
-    val pillLifecycle = if (sensorHoursRemaining in 0L..24L) "$sensorHoursRemaining" + "ч" else daysRemaining
+    val pillLifecycle = if (sensorHoursRemaining in 0L..24L) stringResource(R.string.pill_hours_short, sensorHoursRemaining.toInt()) else daysRemaining
     val pillStatusOnly = shouldShowDashboardSensorStatus(
         isCloneSource = isCloneSource,
         isFreshData = isFreshData,
@@ -1135,7 +1135,7 @@ fun DashboardCombinedHeader(
         heroOwnsAwaitingStatus = resolvedDataState.isAwaitingData && statusCopy != null && pillLifecycle.isNotEmpty(),
     )
     val activePill = SensorPillData(
-        name = sensorDisplayName.ifEmpty { "Датчик" },
+        name = sensorDisplayName.ifEmpty { stringResource(R.string.nav_sensors) },
         progress = sensorProgress,
         text = if (pillStatusOnly) sensorStatus else pillLifecycle,
         noise = trendResult.noiseLevel,

@@ -557,7 +557,7 @@ fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
     fun shifted(field: Int, amount: Int): Long = Calendar.getInstance().apply { timeInMillis = selected; add(field, amount) }.timeInMillis
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Сейчас" to 0, "15 мин назад" to 15, "30 мин" to 30, "1 час" to 60, "2 часа" to 120, "3 часа" to 180).forEach { (name, min) ->
+            listOf(stringResource(R.string.cal_now) to 0, stringResource(R.string.cal_ago15) to 15, stringResource(R.string.cal_30m) to 30, stringResource(R.string.cal_1h) to 60, stringResource(R.string.cal_2h) to 120, stringResource(R.string.cal_3h) to 180).forEach { (name, min) ->
                 FilterChip(
                     selected = abs(selected - (nowMs - min * 60_000L)) < 60_000L,
                     onClick = { set(nowMs - min * 60_000L) },
@@ -569,8 +569,8 @@ fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
             FilledTonalIconButton(onClick = { set(shifted(Calendar.DAY_OF_YEAR, -1)) }) { Text("\u2039", fontSize = 24.sp) }
             val dayFmt = SimpleDateFormat("yyyyDDD", Locale.US)
             val dayWord = when (dayFmt.format(Date(selected))) {
-                dayFmt.format(Date(nowMs)) -> "Сегодня"
-                dayFmt.format(Date(nowMs - 86_400_000L)) -> "Вчера"
+                dayFmt.format(Date(nowMs)) -> stringResource(R.string.cal_today)
+                dayFmt.format(Date(nowMs - 86_400_000L)) -> stringResource(R.string.cal_yesterday)
                 else -> null
             }
             val dateText = SimpleDateFormat("d MMMM", Locale.getDefault()).format(Date(selected))

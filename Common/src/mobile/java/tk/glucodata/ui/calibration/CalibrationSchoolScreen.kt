@@ -54,23 +54,21 @@ fun CalibrationSchoolScreen(
     val lastTs = sp0.getLong("ts", 0L)
     val stale = lastTs > 0L && System.currentTimeMillis() - lastTs > 15 * 60_000L
     val (title, text) = when {
-        hours < 0 && sp0.contains("ts") && stale ->
-            "Нет свежих данных" to "Последнее значение пришло больше 15 минут назад. Дождитесь новых показаний."
-        hours < 0 && sp0.contains("ts") ->
-            "Датчик подключён" to "Возраст датчика пока не определён. Калибруйте, когда сахар ровный."
-        hours < 0 -> "Датчик ещё не найден" to "Как только придут первые значения, здесь появится совет."
-        hours < 24 -> "Сейчас калибровать нельзя" to "Датчику ${Math.round(hours)} ч. Первые сутки он привыкает к коже, значения плавают. Подождите ещё ${Math.ceil(24 - hours).toInt()} ч."
-        hours < 48 -> "Лучше подождать" to "Датчику ${Math.round(hours)} ч. Калибровка возможна, но точнее будет после 48 часов."
-        stale -> "Нет свежих данных" to "Последнее значение пришло больше 15 минут назад. Дождитесь новых показаний."
-        unstable -> "Подождите ~15 минут (нестабильно)" to "Сахар ${if (velocity > 0) "растёт" else "падает"}: замер сейчас даст неточную калибровку. Дождитесь ровной линии без стрелок."
-        else -> "Условия оптимальные" to "Датчик «устоялся», сахар ровный. Сделайте замер глюкометром и введите его в калибровках."
+        hours < 0 && sp0.contains("ts") && stale -> ctx.getString(tk.glucodata.R.string.cal_no_fresh_title) to ctx.getString(tk.glucodata.R.string.cal_no_fresh_text)
+        hours < 0 && sp0.contains("ts") -> ctx.getString(tk.glucodata.R.string.cal_connected_title) to ctx.getString(tk.glucodata.R.string.cal_connected_text)
+        hours < 0 -> ctx.getString(tk.glucodata.R.string.cal_notfound_title) to ctx.getString(tk.glucodata.R.string.cal_notfound_text)
+        hours < 24 -> ctx.getString(tk.glucodata.R.string.cal_no_title) to ctx.getString(tk.glucodata.R.string.cal_no_text, Math.round(hours).toInt(), Math.ceil(24 - hours).toInt())
+        hours < 48 -> ctx.getString(tk.glucodata.R.string.cal_wait_title) to ctx.getString(tk.glucodata.R.string.cal_wait_text, Math.round(hours).toInt())
+        stale -> ctx.getString(tk.glucodata.R.string.cal_no_fresh_title) to ctx.getString(tk.glucodata.R.string.cal_no_fresh_text)
+        unstable -> ctx.getString(tk.glucodata.R.string.cal_unstable_title) to ctx.getString(if (velocity > 0) tk.glucodata.R.string.cal_unstable_up else tk.glucodata.R.string.cal_unstable_down)
+        else -> ctx.getString(tk.glucodata.R.string.cal_ok_title) to ctx.getString(tk.glucodata.R.string.cal_ok_text)
     }
     val ok = (hours >= 48 || hours < 0 && sp0.contains("ts")) && !stale && !unstable
     Column(
         Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("Калибровка", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        Text(ctx.getString(tk.glucodata.R.string.nav_calibration), fontSize = 30.sp, fontWeight = FontWeight.Bold)
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         // Сырое и итоговое значение берём из тех же данных, что и главный экран (после обработки алгоритмом датчика)
         val lastPt = history.lastOrNull { it.value > 0f }
@@ -106,23 +104,23 @@ fun CalibrationSchoolScreen(
                         )
                         Text(arrow, fontSize = 38.sp, color = MaterialTheme.colorScheme.primary)
                     }
-                    Text((if (mmol) "ммоль/л" else "мг/дл") + " · сейчас", fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(ctx.getString(tk.glucodata.R.string.cal_unit_now, ctx.getString(if (mmol) tk.glucodata.R.string.cal_unit_mmol else tk.glucodata.R.string.cal_unit_mgdl)), fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (cal != null) Text(
-                        "до калибровки: ${f(raw)}",
+                        ctx.getString(tk.glucodata.R.string.cal_before, f(raw)),
                         fontSize = 14.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (userCals.isNotEmpty()) {
-                        Text("Ваши калибровки на этом датчике", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        Text(ctx.getString(tk.glucodata.R.string.cal_yours), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                         Text(
-                            "Это замеры глюкометра, которые были сохранены (здесь или из GIS). Если вы их не вводили, удалите.",
+                            ctx.getString(tk.glucodata.R.string.cal_yours_hint),
                             fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         fun u(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
                         userCals.sortedByDescending { it.timestamp }.take(3).forEach { c ->
                             val t = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(c.timestamp))
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                Text("$t · датчик ${u(c.sensorValue)} → глюкометр ${u(c.userValue)}", fontSize = 14.sp, modifier = Modifier.weight(1f))
-                                TextButton(onClick = { scope.launch { tk.glucodata.data.calibration.CalibrationManager.deleteCalibration(c) } }) { Text("Удалить") }
+                                Text(ctx.getString(tk.glucodata.R.string.cal_row, t, u(c.sensorValue), u(c.userValue)), fontSize = 14.sp, modifier = Modifier.weight(1f))
+                                TextButton(onClick = { scope.launch { tk.glucodata.data.calibration.CalibrationManager.deleteCalibration(c) } }) { Text(ctx.getString(tk.glucodata.R.string.cal_delete)) }
                             }
                         }
                     }
@@ -133,8 +131,8 @@ fun CalibrationSchoolScreen(
         // 3. Калибровка: ввод прямо на экране
         Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Калибровка", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                Text("Сравните с глюкометром и введите его число.", fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(ctx.getString(tk.glucodata.R.string.nav_calibration), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(ctx.getString(tk.glucodata.R.string.cal_compare), fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 MeterPhotoButton(onTriggerCalibration)
                 val whenMs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) } // null = «сейчас»
                 val expanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -155,11 +153,11 @@ fun CalibrationSchoolScreen(
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
                             Text(
-                                "Время: " + java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(shownMs)),
+                                ctx.getString(tk.glucodata.R.string.cal_time, java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(shownMs))),
                                 fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f)
                             )
                             if (whenMs.value != null) {
-                                TextButton(onClick = { whenMs.value = null }) { Text("Сейчас") }
+                                TextButton(onClick = { whenMs.value = null }) { Text(ctx.getString(tk.glucodata.R.string.cal_now)) }
                             }
                             Text(if (expanded.value) "\u25B4" else "\u25BE", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
                         }
@@ -167,7 +165,7 @@ fun CalibrationSchoolScreen(
                             TimeStepper(selected = shownMs, onChange = { ms -> if (Math.abs(ms - nowMs) < 60_000L) whenMs.value = null else setTime(ms) })
                         }
                         if (!expanded.value) {
-                            Text("Нажмите, чтобы изменить время замера", fontSize = 12.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(ctx.getString(tk.glucodata.R.string.cal_time_hint), fontSize = 12.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -195,7 +193,7 @@ fun CalibrationSchoolScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        (if (ok) "\u2713 Сейчас оптимально калибровать: " else "\u26A0 $title. ") + text,
+                        if (ok) ctx.getString(tk.glucodata.R.string.cal_advice_ok, text) else ctx.getString(tk.glucodata.R.string.cal_advice_warn, title, text),
                         modifier = Modifier.padding(16.dp), fontSize = 16.sp, color = badgeColor
                     )
                 }
@@ -209,20 +207,20 @@ fun CalibrationSchoolScreen(
                         val rawDisplay = near?.rawValue?.takeIf { it > 0f } ?: (raw / k).toFloat()
                         scope.launch {
                             val added = tk.glucodata.data.calibration.CalibrationManager.addCalibration(ts, auto, rawDisplay, v, null, false)
-                            android.widget.Toast.makeText(ctx, if (added) "Калибровка добавлена: было ${fmt(auto)} → глюкометр ${fmt(v)}" else "Не удалось добавить калибровку", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(ctx, if (added) ctx.getString(tk.glucodata.R.string.cal_added, fmt(auto), fmt(v)) else ctx.getString(tk.glucodata.R.string.cal_add_failed), android.widget.Toast.LENGTH_LONG).show()
                         }
                     },
                     enabled = raw > 0 && entry.value > 0f,
                     modifier = Modifier.fillMaxWidth().height(58.dp)
-                ) { Text("Сохранить калибровку", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+                ) { Text(ctx.getString(tk.glucodata.R.string.cal_save), fontSize = 18.sp, fontWeight = FontWeight.Bold) }
             }
         }
-        Text("Как калибровать", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(ctx.getString(tk.glucodata.R.string.cal_how), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
         listOf(
-            "1" to "Вымойте руки и сделайте замер глюкометром.",
-            "2" to "Калибруйте, когда сахар ровный: без стрелок вверх и вниз, не после еды и не после инсулина.",
-            "3" to "Нужно три замера на разных уровнях, например 5, 8 и 12. Тогда линия подстроится точнее.",
-            "4" to "Сразу введите число в калибровках. Старый замер уже не подходит.",
+            "1" to ctx.getString(tk.glucodata.R.string.cal_step1),
+            "2" to ctx.getString(tk.glucodata.R.string.cal_step2),
+            "3" to ctx.getString(tk.glucodata.R.string.cal_step3),
+            "4" to ctx.getString(tk.glucodata.R.string.cal_step4),
         ).forEach { (n, t) ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(n, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -230,7 +228,7 @@ fun CalibrationSchoolScreen(
             }
         }
         Text(
-            "Не калибруйте при резких скачках, если сахар меняется быстро или если сомневаетесь в замере.",
+            ctx.getString(tk.glucodata.R.string.cal_dont),
             fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Card(
@@ -238,21 +236,19 @@ fun CalibrationSchoolScreen(
             shape = MaterialTheme.shapes.extraLarge
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Калибровка из приложения GIS", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text(ctx.getString(tk.glucodata.R.string.cal_from_gis_title), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Замер можно ввести и в приложении GIS: он придёт сюда и учтётся так же, как введённый в GIS Monitor, " +
-                        "а в AAPS и Nightscout уйдёт уже откалиброванное значение. " +
-                        "Для этого включите приём ниже. По умолчанию он выключен, чтобы посторонние приложения не могли менять вашу калибровку.",
+                    ctx.getString(tk.glucodata.R.string.cal_from_gis_text),
                     fontSize = 14.sp
                 )
                 val gisOn = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(sp0.getBoolean("gis_cal_enabled", false)) }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Text("Принимать калибровки из GIS", fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    Text(ctx.getString(tk.glucodata.R.string.cal_accept_gis), fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                     Switch(checked = gisOn.value, onCheckedChange = { gisOn.value = it; sp0.edit().putBoolean("gis_cal_enabled", it).apply() })
                 }
             }
         }
-        OutlinedButton(onClick = { navController.navigate("calibrations") }, Modifier.fillMaxWidth()) { Text("Открыть калибровки") }
+        OutlinedButton(onClick = { navController.navigate("calibrations") }, Modifier.fillMaxWidth()) { Text(ctx.getString(tk.glucodata.R.string.cal_open)) }
         Spacer(Modifier.height(80.dp))
     }
 }
@@ -284,21 +280,21 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
             val value = withContext(kotlinx.coroutines.Dispatchers.Default) { readMeter(photo, tk.glucodata.Applic.unit == 1) }
             busy.value = false
             if (value == null) {
-                android.widget.Toast.makeText(ctx, "Число не распознано. Введите его вручную.", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(ctx, ctx.getString(tk.glucodata.R.string.cal_ocr_fail), android.widget.Toast.LENGTH_LONG).show()
                 openSheet(null)
             } else pending.value = value
         }
     }
     val perm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) shot.launch(uri) else android.widget.Toast.makeText(ctx, "Нужен доступ к камере, чтобы сфотографировать глюкометр.", android.widget.Toast.LENGTH_LONG).show()
+        if (granted) shot.launch(uri) else android.widget.Toast.makeText(ctx, ctx.getString(tk.glucodata.R.string.cal_cam_perm), android.widget.Toast.LENGTH_LONG).show()
     }
     pending.value?.let { v ->
         val mmol = tk.glucodata.Applic.unit == 1
         val shown = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { pending.value = null },
-            title = { Text("Подтверждаете показание?") },
-            text = { Text("Глюкометр показывает $shown ${if (mmol) "ммоль/л" else "мг/дл"}. Если верно, калибровка добавится сразу.") },
+            title = { Text(ctx.getString(tk.glucodata.R.string.cal_confirm_title)) },
+            text = { Text(ctx.getString(tk.glucodata.R.string.cal_confirm_text, shown.toString(), ctx.getString(if (mmol) tk.glucodata.R.string.cal_unit_mmol else tk.glucodata.R.string.cal_unit_mgdl))) },
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     pending.value = null
@@ -309,14 +305,14 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
                     scope.launch {
                         val ok = tk.glucodata.data.calibration.CalibrationManager.addCalibration(System.currentTimeMillis(), auto, raw, v, null, false)
                         val fmt = { x: Float -> String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", x) }
-                        android.widget.Toast.makeText(ctx, if (ok) "Калибровка добавлена: было ${fmt(auto)} → глюкометр $shown" else "Не удалось добавить калибровку", android.widget.Toast.LENGTH_LONG).show()
+                        android.widget.Toast.makeText(ctx, if (ok) ctx.getString(tk.glucodata.R.string.cal_added, fmt(auto), shown.toString()) else ctx.getString(tk.glucodata.R.string.cal_add_failed), android.widget.Toast.LENGTH_LONG).show()
                     }
-                }) { Text("Да, верно") }
+                }) { Text(ctx.getString(tk.glucodata.R.string.cal_yes)) }
             },
             dismissButton = {
                 Row {
-                    androidx.compose.material3.TextButton(onClick = { pending.value = null; openSheet(v) }) { Text("Исправить") }
-                    androidx.compose.material3.TextButton(onClick = { pending.value = null }) { Text("Отмена") }
+                    androidx.compose.material3.TextButton(onClick = { pending.value = null; openSheet(v) }) { Text(ctx.getString(tk.glucodata.R.string.cal_fix)) }
+                    androidx.compose.material3.TextButton(onClick = { pending.value = null }) { Text(ctx.getString(tk.glucodata.R.string.cal_cancel)) }
                 }
             }
         )
@@ -328,9 +324,9 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
         },
         enabled = !busy.value,
         modifier = Modifier.fillMaxWidth()
-    ) { Text(if (busy.value) "Читаю число…" else "Калибровка по фото глюкометра") }
+    ) { Text(ctx.getString(if (busy.value) tk.glucodata.R.string.cal_reading else tk.glucodata.R.string.cal_photo)) }
     Text(
-        "Сфотографируйте экран глюкометра. Число подставится само, вы проверите его и подтвердите.",
+        ctx.getString(tk.glucodata.R.string.cal_photo_hint),
         fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
