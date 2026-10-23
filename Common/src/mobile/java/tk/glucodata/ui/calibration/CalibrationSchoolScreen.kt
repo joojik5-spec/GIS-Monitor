@@ -99,19 +99,31 @@ fun CalibrationSchoolScreen(
             val trendNow = sp0.getInt("trend", 0)
             val arrow = when { trendNow >= 2 -> "\u2191"; trendNow == 1 -> "\u2197"; trendNow == 0 -> "\u2192"; trendNow == -1 -> "\u2198"; else -> "\u2193" }
             Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-                Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            f(cal ?: raw), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold,
-                            modifier = if (cal != null) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(20.dp)).padding(horizontal = 14.dp, vertical = 2.dp) else Modifier
-                        )
-                        Text(arrow, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+                Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(ctx.getString(tk.glucodata.R.string.nav_calibration), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text(
+                                    f(cal ?: raw), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold,
+                                    modifier = if (cal != null) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(20.dp)).padding(horizontal = 14.dp, vertical = 2.dp) else Modifier
+                                )
+                                Text(arrow, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text(ctx.getString(tk.glucodata.R.string.cal_unit_now, ctx.getString(if (mmol) tk.glucodata.R.string.cal_unit_mmol else tk.glucodata.R.string.cal_unit_mgdl)), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (cal != null) Text(ctx.getString(tk.glucodata.R.string.cal_before, f(raw)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        // Справа: полезное для калибровки — возраст датчика, число ваших калибровок и готовность
+                        Column(horizontalAlignment = androidx.compose.ui.Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (hours >= 0) Text(ctx.getString(tk.glucodata.R.string.pill_hours_short, Math.round(hours).toInt()), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text("${userCals.size} \u00d7 \u2713", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                title, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
+                                color = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.border(1.dp, (if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary).copy(alpha = 0.5f), androidx.compose.foundation.shape.RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 3.dp)
+                            )
+                        }
                     }
-                    Text(ctx.getString(tk.glucodata.R.string.cal_unit_now, ctx.getString(if (mmol) tk.glucodata.R.string.cal_unit_mmol else tk.glucodata.R.string.cal_unit_mgdl)), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (cal != null) Text(
-                        ctx.getString(tk.glucodata.R.string.cal_before, f(raw)),
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }
@@ -119,7 +131,7 @@ fun CalibrationSchoolScreen(
         // 3. Калибровка: ввод прямо на экране
         Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(ctx.getString(tk.glucodata.R.string.nav_calibration), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                if (raw <= 0) Text(ctx.getString(tk.glucodata.R.string.nav_calibration), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(ctx.getString(tk.glucodata.R.string.cal_compare), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 MeterPhotoButton(onTriggerCalibration)
                 val whenMs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) } // null = «сейчас»

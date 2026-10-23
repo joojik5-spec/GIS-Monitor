@@ -1086,7 +1086,7 @@ internal fun PinnedMetricChip(
             Text(
                 text = spec.title,
                 style = MaterialTheme.typography.labelMedium.scalePinnedStyle(contentScale),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = SugarTint.color?.copy(alpha = 0.85f) ?: MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 onTextLayout = { titleWhole = !it.hasVisualOverflow && !it.isLineEllipsized(0) }
@@ -1111,7 +1111,7 @@ internal fun PinnedMetricChip(
                         maxFontSize = valueStyle.fontSize,
                         stepSize = 0.25.sp
                     ),
-                    color = tone,
+                    color = SugarTint.color ?: tone,
                     maxLines = 1,
                     softWrap = false,
                     // Whole means nothing clipped. Auto-size exists so the value never
@@ -1723,7 +1723,7 @@ private fun PinnedWindowPill(
             Text(
                 text = text,
                 style = pinnedWindowLabelStyle().scalePinnedStyle(contentScale),
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 softWrap = false
             )
@@ -1731,8 +1731,13 @@ private fun PinnedWindowPill(
         Icon(
             imageVector = Icons.Default.UnfoldMore,
             contentDescription = stringResource(R.string.stats_window_label),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             modifier = Modifier.size(14.dp * contentScale)
         )
     }
+}
+
+/** Цвет текущего сахара: плашки показателей берут его, чтобы весь экран был одного цвета. */
+object SugarTint {
+    var color by androidx.compose.runtime.mutableStateOf<androidx.compose.ui.graphics.Color?>(null)
 }

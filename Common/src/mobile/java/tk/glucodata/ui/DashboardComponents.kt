@@ -69,6 +69,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.HourglassEmpty
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -492,6 +493,7 @@ fun DashboardCombinedHeader(
     // the display timeout, which is too lenient for a forecast: after a
     // reconnect gap the trend only describes the pre-gap drop, so the
     // classifier additionally caps the data age.
+    androidx.compose.runtime.SideEffect { tk.glucodata.ui.stats.SugarTint.color = heroValueColor.takeIf { isFreshData } }
     val heroArrowColor = if (arrowForecastColorsEnabled && isFreshData) {
         val forecastRisk = remember(
             dvs?.primaryValue, trendResult, isMmol, resolvedDataState,
@@ -821,14 +823,15 @@ fun DashboardCombinedHeader(
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
                         ) {
                             DashboardHeroValueCluster(
                                 modifier = Modifier.weight(1f, fill = false),
                                 primaryText = primaryText,
                                 secondaryText = secondaryText,
                                 tertiaryText = tertiaryText,
-                                primaryStyle = primaryValueStyle,
+                                primaryStyle = primaryValueStyle.scaleForHero(1.25f),
                                 secondaryInlineStyle = secondaryInlineStyle,
                                 separatorStyle = slashStyle,
                                 secondaryStackStyle = secondaryThreeValueStyle,
@@ -861,7 +864,7 @@ fun DashboardCombinedHeader(
                                 delta1Text = null,
                                 delta5Text = null,
                                 contentColor = glucoseContentColor,
-                                iconSize = resolvedTrendIconSize
+                                iconSize = resolvedTrendIconSize * 1.45f
                             )
 
                         }
@@ -1267,7 +1270,7 @@ private fun heroMaxOffset(history: List<GlucosePoint>, windowMs: Long): Long {
     return (newest - oldest - windowMs).coerceAtLeast(0L)
 }
 
-/** Масштаб (1/3/6/12 ч) и ползунок прокрутки графика карточки сахара. */
+/** Масштаб графика (выпадающее меню со стрелкой) и ползунок прокрутки в одной строке. */
 @Composable
 private fun HeroChartControls(
     history: List<GlucosePoint>,
@@ -1279,17 +1282,33 @@ private fun HeroChartControls(
 ) {
     val maxOff = heroMaxOffset(history, windowHours * 3_600_000L)
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-    Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            listOf(1, 3, 6, 12).forEach { h ->
-                val sel = h == windowHours
-                Box(
-                    Modifier.clip(RoundedCornerShape(50))
-                        .background(if (sel) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f) else Color.Transparent)
-                        .border(1.dp, color.copy(alpha = if (sel) 0.5f else 0.25f), RoundedCornerShape(50))
-                        .clickable { onWindow(h) }
-                        .padding(horizontal = 12.dp, vertical = 3.dp)
-                ) { Text(stringResource(R.string.pill_hours_short, h), fontSize = 12.sp, color = color, fontWeight = if (sel) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal) }
+    var open by remember { mutableStateOf(false) }
+    val arrowRot by androidx.compose.animation.core.animateFloatAsState(if (open) 90f else 0f, label = "heroArrow")
+    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box {
+            Row(
+                Modifier.clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), RoundedCornerShape(50))
+                    .clickable { haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove); open = !open }
+                    .padding(start = 8.dp, end = 12.dp, top = 5.dp, bottom = 5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = arrowRot }
+                )
+                Text(stringResource(R.string.pill_hours_short, windowHours), style = MaterialTheme.typography.labelLarge, color = color, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+            }
+            androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                listOf(1, 3, 6, 12, 24).forEach { h ->
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(stringResource(R.string.pill_hours_short, h), style = MaterialTheme.typography.labelLarge, color = if (h == windowHours) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, fontWeight = if (h == windowHours) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal) },
+                        onClick = { open = false; onWindow(h) }
+                    )
+                }
             }
         }
         if (maxOff > 0L) {
@@ -1300,7 +1319,7 @@ private fun HeroChartControls(
                     if (new / (windowHours * 300_000L) != offsetMs / (windowHours * 300_000L)) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                     onOffset(new)
                 },
-                modifier = Modifier.fillMaxWidth().height(28.dp),
+                modifier = Modifier.weight(1f).height(28.dp).padding(start = 8.dp),
                 colors = androidx.compose.material3.SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),

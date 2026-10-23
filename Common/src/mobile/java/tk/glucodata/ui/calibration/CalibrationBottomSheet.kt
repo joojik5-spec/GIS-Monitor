@@ -344,11 +344,12 @@ fun CalibrationBottomSheet(
             val isNow = abs(selectedTimestamp - System.currentTimeMillis()) < 60_000
 
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(28.dp))
                     .clickable { isTimeExpanded = !isTimeExpanded }
             ) {
                 Column(modifier = Modifier.padding(timeCardPadding)) {
@@ -363,8 +364,8 @@ fun CalibrationBottomSheet(
                             Column {
 //                                Text("Time", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
-                                    text = if (isNow) stringResource(R.string.now) else dateFormatter.format(Date(selectedTimestamp)),
-                                    style = MaterialTheme.typography.titleMediumEmphasized,)
+                                    text = stringResource(R.string.cal_time, SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(selectedTimestamp))),
+                                    style = MaterialTheme.typography.titleMediumEmphasized, color = MaterialTheme.colorScheme.primary)
                             }
                         }
 
@@ -391,7 +392,7 @@ fun CalibrationBottomSheet(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            TimeStepper(selected = selectedTimestamp, onChange = { selectedTimestamp = it })
+                            TimeStepper(selected = selectedTimestamp, onChange = { selectedTimestamp = it }, showQuick = false, showDay = false)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
