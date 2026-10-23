@@ -75,9 +75,12 @@ fun CalibrationSchoolScreen(
         // Сырое и итоговое значение берём из тех же данных, что и главный экран (после обработки алгоритмом датчика)
         val lastPt = history.lastOrNull { it.value > 0f }
         val kk = if (Applic.unit == 1) 18.0182 else 1.0
-        val rawPt = lastPt?.rawValue?.takeIf { it > 0f }
-        val raw = if (lastPt != null) (rawPt ?: lastPt.value).toDouble() * (if (isMmolNow) kk else 1.0) else sp.getFloat("raw", 0f).toDouble()
-        val cal = if (lastPt != null) { if (rawPt != null && Math.abs(lastPt.value - rawPt) > 0.04f) lastPt.value.toDouble() * (if (isMmolNow) kk else 1.0) else null } else if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
+        val mult = if (isMmolNow) kk else 1.0
+        // raw здесь — значение датчика после его алгоритма (без калибровок пользователя); cal — после калибровки, если она есть
+        val raw = if (lastPt != null) lastPt.value.toDouble() * mult else sp.getFloat("raw", 0f).toDouble()
+        val cal = if (lastPt != null) tk.glucodata.ui.SealedGlucoseValue.calibratedFor(lastPt, false, tk.glucodata.data.calibration.CalibrationManager.getResolvedCurrentSensorId())
+            ?.takeIf { Math.abs(it - lastPt.value) > 0.04f }?.let { it.toDouble() * mult }
+            else if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
         // Ваши калибровки: только включённые, сделанные уже на этом датчике.
         val allCals by tk.glucodata.data.calibration.CalibrationManager.getCalibrationsFlow()
             .collectAsStateWithLifecycle(initialValue = tk.glucodata.data.calibration.CalibrationManager.getCachedCalibrations())
@@ -104,8 +107,8 @@ fun CalibrationSchoolScreen(
                         Text(arrow, fontSize = 38.sp, color = MaterialTheme.colorScheme.primary)
                     }
                     Text((if (mmol) "ммоль/л" else "мг/дл") + " · сейчас", fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        "Сырой сигнал: ${f(raw)} · " + (if (hasUserCal) "после калибровки" else "показание датчика") + ": ${f(cal ?: raw)}",
+                    if (cal != null) Text(
+                        "до калибровки: ${f(raw)}",
                         fontSize = 14.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (userCals.isNotEmpty()) {

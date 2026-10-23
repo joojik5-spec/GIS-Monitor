@@ -320,9 +320,9 @@ fun DashboardCombinedHeader(
             readingDeltaTexts(listOf(newest.timestamp), history, isMmol, 5, useRaw = viewMode == 1 || viewMode == 3).firstOrNull()
         }
     }
-    // Сахар без калибровки (сырое значение датчика): мелко над стрелкой; крупное число — откалиброванное
-    val heroRawText = if (viewMode == 1 || viewMode == 3) null else latestPoint?.rawValue?.takeIf { it > 0f }?.let {
-        String.format(java.util.Locale.getDefault(), if (isMmol) "%.1f" else "%.0f", it)
+    // Если есть калибровка: крупное число — откалиброванное, мелким рядом — значение датчика до калибровки. Без калибровки ничего не показываем.
+    val heroRawText = latestPoint?.takeIf { calibratedValue != null && calibratedValue.isFinite() && kotlin.math.abs(calibratedValue - it.value) > 0.04f && it.value > 0f }?.let {
+        String.format(java.util.Locale.getDefault(), if (isMmol) "%.1f" else "%.0f", it.value)
     }
     val adaptiveMetrics = rememberAdaptiveWindowMetrics()
     val isLandscape = adaptiveMetrics.isLandscape
@@ -803,20 +803,6 @@ fun DashboardCombinedHeader(
                         onLeftTap = onHeroClick,
                         modifier = Modifier.matchParentSize()
                     )
-                    if (!heroRawText.isNullOrEmpty()) {
-                        androidx.compose.material3.Text(
-                            text = heroRawText,
-                            style = androidx.compose.ui.text.TextStyle(
-                                fontSize = androidx.compose.ui.unit.TextUnit(17f, androidx.compose.ui.unit.TextUnitType.Sp),
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum"
-                            ),
-                            color = glucoseContentColor.copy(alpha = 0.75f),
-                            softWrap = false,
-                            maxLines = 1,
-                            modifier = Modifier.align(Alignment.TopEnd).padding(top = resolvedVerticalPadding, end = resolvedEndPadding)
-                        )
-                    }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -851,6 +837,20 @@ fun DashboardCombinedHeader(
                                 primaryColor = heroValueColor,
                                 deltaText = heroDeltaText.takeIf { singleDeltaFits }
                             )
+                            if (!heroRawText.isNullOrEmpty()) {
+                                androidx.compose.material3.Text(
+                                    text = heroRawText,
+                                    style = androidx.compose.ui.text.TextStyle(
+                                        fontSize = androidx.compose.ui.unit.TextUnit(17f, androidx.compose.ui.unit.TextUnitType.Sp),
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                        fontFeatureSettings = "tnum"
+                                    ),
+                                    color = glucoseContentColor.copy(alpha = 0.75f),
+                                    softWrap = false,
+                                    maxLines = 1,
+                                    modifier = Modifier.align(Alignment.Top).padding(start = 6.dp, top = 4.dp)
+                                )
+                            }
 
                             Spacer(modifier = Modifier.width(resolvedClusterGap))
 
