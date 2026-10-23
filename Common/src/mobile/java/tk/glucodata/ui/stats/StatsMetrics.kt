@@ -1086,7 +1086,7 @@ internal fun PinnedMetricChip(
             Text(
                 text = spec.title,
                 style = MaterialTheme.typography.labelMedium.scalePinnedStyle(contentScale),
-                color = SugarTint.color?.copy(alpha = 0.85f) ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 onTextLayout = { titleWhole = !it.hasVisualOverflow && !it.isLineEllipsized(0) }

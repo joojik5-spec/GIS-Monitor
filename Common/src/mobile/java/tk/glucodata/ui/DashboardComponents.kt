@@ -824,7 +824,7 @@ fun DashboardCombinedHeader(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
+                            horizontalArrangement = Arrangement.Start
                         ) {
                             DashboardHeroValueCluster(
                                 modifier = Modifier.weight(1f, fill = false),
@@ -1376,8 +1376,8 @@ private fun HeroBigChart(
                     drawRect(
                         brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
                             0f to Color.Black.copy(alpha = 0.05f),
-                            0.5f to Color.Black.copy(alpha = 0.05f),
-                            0.72f to Color.Black.copy(alpha = 1f),
+                            0.36f to Color.Black.copy(alpha = 0.05f),
+                            0.54f to Color.Black.copy(alpha = 1f),
                             1f to Color.Black.copy(alpha = 1f)
                         ),
                         blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
@@ -1391,7 +1391,7 @@ private fun HeroBigChart(
             val padBot = (HERO_PLOT_BOTTOM_DP.dp.toPx()).coerceAtMost(size.height * 0.5f)
             val h = size.height - padTop - padBot
             val r = 4.dp.toPx()
-            val w = size.width - r
+            val w = size.width * 0.72f - r
             // разграничители по времени только в правой (яркой) половине; крайний справа — «сейчас»
             for (i in 2..4) {
                 val x = w * i / 4f
@@ -1420,15 +1420,18 @@ private fun HeroBigChart(
         }
         // подписи часов внизу, только в правой части (за стрелкой), где график яркий
         Row(
-            Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).padding(end = 12.dp, bottom = (HERO_PLOT_BOTTOM_DP - 6).dp),
+            Modifier.align(Alignment.BottomStart).fillMaxWidth(0.72f).padding(bottom = (HERO_PLOT_BOTTOM_DP - 6).dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Spacer(Modifier.weight(1f))
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceBetween) {
             for (i in 2..4) {
                 Text(
                     text = fmt.format(java.util.Date(start + windowMs * i / 4)),
                     style = androidx.compose.ui.text.TextStyle(fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp), fontFeatureSettings = "tnum"),
                     color = textColor.copy(alpha = 0.6f), maxLines = 1, softWrap = false
                 )
+            }
             }
         }
         // сахар на правом краю выбранного периода: при прокрутке показывает значение в этот момент
@@ -1438,7 +1441,8 @@ private fun HeroBigChart(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 color = gisRangeColor(last.value, isMmol, isDark),
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 14.dp)
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.72f).padding(top = 10.dp)
             )
         }
         // шкала сахара слева: яркие подписи поверх приглушённого графика, не чаще чем раз в 18dp
