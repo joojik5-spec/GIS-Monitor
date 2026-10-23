@@ -53,19 +53,29 @@ fun CalibrationSchoolScreen(
         tk.glucodata.logic.TrendEngine.calculateTrend(history, useRaw = viewModeValue == 1 || viewModeValue == 3, isMmol = isMmolNow).velocity
     }
     val unstable = Math.abs(velocity) >= 1.0f
+    // Шум датчика: средний разброс точек последних 30 минут вокруг сглаженной линии (в единицах экрана).
+    // Спокойный датчик можно калибровать в любое время после прогрева (первые 2 часа), 48 часов ждать не нужно.
+    val noisy = androidx.compose.runtime.remember(history, isMmolNow) {
+        val cut = System.currentTimeMillis() - 30 * 60_000L
+        val v = history.filter { it.timestamp >= cut && it.value > 0f }.map { it.value.toDouble() }
+        if (v.size < 6) false else {
+            val dev = v.indices.map { i -> val lo = maxOf(0, i - 2); val hi = minOf(v.size - 1, i + 2); Math.abs(v[i] - v.subList(lo, hi + 1).average()) }.average()
+            dev > (if (isMmolNow) 0.25 else 4.5)
+        }
+    }
     val lastTs = sp0.getLong("ts", 0L)
     val stale = lastTs > 0L && System.currentTimeMillis() - lastTs > 15 * 60_000L
     val (title, text) = when {
         hours < 0 && sp0.contains("ts") && stale -> ctx.getString(tk.glucodata.R.string.cal_no_fresh_title) to ctx.getString(tk.glucodata.R.string.cal_no_fresh_text)
         hours < 0 && sp0.contains("ts") -> ctx.getString(tk.glucodata.R.string.cal_connected_title) to ctx.getString(tk.glucodata.R.string.cal_connected_text)
         hours < 0 -> ctx.getString(tk.glucodata.R.string.cal_notfound_title) to ctx.getString(tk.glucodata.R.string.cal_notfound_text)
-        hours < 24 -> ctx.getString(tk.glucodata.R.string.cal_no_title) to ctx.getString(tk.glucodata.R.string.cal_no_text, Math.round(hours).toInt(), Math.ceil(24 - hours).toInt())
-        hours < 48 -> ctx.getString(tk.glucodata.R.string.cal_wait_title) to ctx.getString(tk.glucodata.R.string.cal_wait_text, Math.round(hours).toInt())
+        hours < 2 -> ctx.getString(tk.glucodata.R.string.cal_no_title) to ctx.getString(tk.glucodata.R.string.cal_warm_text, Math.round(hours).toInt(), Math.ceil(2 - hours).toInt())
+        noisy -> ctx.getString(tk.glucodata.R.string.cal_wait_title) to ctx.getString(tk.glucodata.R.string.cal_noisy_text)
         stale -> ctx.getString(tk.glucodata.R.string.cal_no_fresh_title) to ctx.getString(tk.glucodata.R.string.cal_no_fresh_text)
         unstable -> ctx.getString(tk.glucodata.R.string.cal_unstable_title) to ctx.getString(if (velocity > 0) tk.glucodata.R.string.cal_unstable_up else tk.glucodata.R.string.cal_unstable_down)
         else -> ctx.getString(tk.glucodata.R.string.cal_ok_title) to ctx.getString(tk.glucodata.R.string.cal_ok_text)
     }
-    val ok = (hours >= 48 || hours < 0 && sp0.contains("ts")) && !stale && !unstable
+    val ok = (hours >= 2 || hours < 0 && sp0.contains("ts")) && !stale && !unstable && !noisy
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tk.glucodata.ui.components.TabScreenDefaults.contentPadding()),

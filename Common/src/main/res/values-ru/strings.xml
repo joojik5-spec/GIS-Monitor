@@ -3131,4 +3131,6 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="cal_3h">3 часа</string>
     <string name="cal_today">Сегодня</string>
     <string name="cal_yesterday">Вчера</string>
+    <string name="cal_warm_text">Датчику %1$d ч: он ещё прогревается. Подождите ещё %2$d ч.</string>
+    <string name="cal_noisy_text">Сейчас показания шумные. Подождите несколько минут, пока линия станет ровнее, и калибруйте.</string>
 </resources>

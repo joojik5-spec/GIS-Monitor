@@ -1111,7 +1111,7 @@ internal fun PinnedMetricChip(
                         maxFontSize = valueStyle.fontSize,
                         stepSize = 0.25.sp
                     ),
-                    color = SugarTint.color ?: tone,
+                    color = tone,
                     maxLines = 1,
                     softWrap = false,
                     // Whole means nothing clipped. Auto-size exists so the value never

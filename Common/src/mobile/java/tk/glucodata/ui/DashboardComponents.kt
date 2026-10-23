@@ -831,7 +831,7 @@ fun DashboardCombinedHeader(
                                 primaryText = primaryText,
                                 secondaryText = secondaryText,
                                 tertiaryText = tertiaryText,
-                                primaryStyle = primaryValueStyle.scaleForHero(1.25f),
+                                primaryStyle = primaryValueStyle.scaleForHero(1.08f),
                                 secondaryInlineStyle = secondaryInlineStyle,
                                 separatorStyle = slashStyle,
                                 secondaryStackStyle = secondaryThreeValueStyle,
@@ -864,7 +864,7 @@ fun DashboardCombinedHeader(
                                 delta1Text = null,
                                 delta5Text = null,
                                 contentColor = glucoseContentColor,
-                                iconSize = resolvedTrendIconSize * 1.45f
+                                iconSize = resolvedTrendIconSize * 1.1f
                             )
 
                         }

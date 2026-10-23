@@ -3335,4 +3335,6 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="cal_3h">3 hours</string>
     <string name="cal_today">Today</string>
     <string name="cal_yesterday">Yesterday</string>
+    <string name="cal_warm_text">The sensor is %1$d h old: still warming up. Wait another %2$d h.</string>
+    <string name="cal_noisy_text">The readings are noisy right now. Wait a few minutes for a smoother line, then calibrate.</string>
 </resources>
