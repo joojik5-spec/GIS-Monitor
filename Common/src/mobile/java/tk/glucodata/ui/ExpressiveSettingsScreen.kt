@@ -264,7 +264,7 @@ fun ExpressiveSettingsScreen(
 
         item(key = "general_group") {
             val generalColor = MaterialTheme.colorScheme.primary
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsItem(
                     title = stringResource(R.string.theme_title),
                     subtitle = themeLabel,
@@ -288,7 +288,7 @@ fun ExpressiveSettingsScreen(
         item(key = "general_glucose_group") {
             val glucoseColor = MaterialTheme.colorScheme.primary
             Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 SettingsItem(
@@ -371,7 +371,7 @@ fun ExpressiveSettingsScreen(
         item(key = "notif_group") {
             // Theme: Secondary (Accent)
             val notifColor = MaterialTheme.colorScheme.secondary
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsNavSwitchItem(
                     title = stringResource(R.string.glucose_alerts_title),
                     subtitle = stringResource(
@@ -446,7 +446,7 @@ fun ExpressiveSettingsScreen(
         // === ALERTS ===
 
         item(key = "alerts_group") {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
             }
         }
@@ -461,7 +461,7 @@ fun ExpressiveSettingsScreen(
             val broadcastComputedTrend by viewModel.broadcastComputedTrend.collectAsStateWithLifecycle()
             val xdripReportAsLibre2 by viewModel.xdripReportAsLibre2.collectAsStateWithLifecycle()
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.xdripbroadcast),
                     subtitle = stringResource(R.string.patchedlibrebroadcast),
@@ -675,7 +675,7 @@ fun ExpressiveSettingsScreen(
         item(key = "adv_group") {
             // Theme: OnSurfaceVariant (Technical/Neutral)
             val advColor = MaterialTheme.colorScheme.onSurfaceVariant
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.turbo_title),
                     subtitle = stringResource(R.string.turbo_desc),
@@ -775,7 +775,7 @@ fun ExpressiveSettingsScreen(
                     }
                 }
             )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppUpdatesSettingsItem(
                     iconTint = dataColor,
                     position = CardPosition.TOP,
@@ -868,7 +868,7 @@ fun ExpressiveSettingsScreen(
         item(key = "danger_label") { SectionLabel(stringResource(R.string.danger_zone), isError = true) }
 
         item(key = "danger_group") {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Restart App (Low Severity)
                 DangerItem(
                     title = stringResource(R.string.restart_app),
@@ -1121,7 +1121,7 @@ fun PredictiveSimulationSettingsScreen(
             }
 
             item(key = "behavior") {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SettingsSwitchItem(
                         title = stringResource(R.string.predictive_trend_momentum),
                         checked = trendMomentumEnabled,

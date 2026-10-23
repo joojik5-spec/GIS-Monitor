@@ -880,13 +880,15 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
                                         tint = tint,
                                         modifier = Modifier.size(24.dp)
                                     )
-                                    androidx.compose.material3.Text(
+                                    FontScaleCap(max = 1.0f) { androidx.compose.material3.Text(
                                         item.label,
                                         color = tint,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
+                                        softWrap = false,
+                                        modifier = Modifier.padding(horizontal = 2.dp),
                                         fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium,
                                         maxLines = 1
-                                    )
+                                    ) }
                                 }
                             }
                         }

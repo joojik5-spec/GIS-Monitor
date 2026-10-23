@@ -551,12 +551,12 @@ fun CalibrationBottomSheet(
  * Шаг один час и одна минута; стрелку можно держать (значения бегут), плашку можно листать свайпом.
  */
 @Composable
-fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
+fun TimeStepper(selected: Long, onChange: (Long) -> Unit, showQuick: Boolean = true, showDay: Boolean = true) {
     val nowMs = System.currentTimeMillis()
     fun set(ms: Long) = onChange(ms.coerceIn(nowMs - 7L * 86_400_000L, nowMs))
     fun shifted(field: Int, amount: Int): Long = Calendar.getInstance().apply { timeInMillis = selected; add(field, amount) }.timeInMillis
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (showQuick) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(stringResource(R.string.cal_now) to 0, stringResource(R.string.cal_ago15) to 15, stringResource(R.string.cal_30m) to 30, stringResource(R.string.cal_1h) to 60, stringResource(R.string.cal_2h) to 120, stringResource(R.string.cal_3h) to 180).forEach { (name, min) ->
                 FilterChip(
                     selected = abs(selected - (nowMs - min * 60_000L)) < 60_000L,
@@ -565,7 +565,7 @@ fun TimeStepper(selected: Long, onChange: (Long) -> Unit) {
                 )
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        if (showDay) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             FilledTonalIconButton(onClick = { set(shifted(Calendar.DAY_OF_YEAR, -1)) }) { Text("\u2039", fontSize = 24.sp) }
             val dayFmt = SimpleDateFormat("yyyyDDD", Locale.US)
             val dayWord = when (dayFmt.format(Date(selected))) {

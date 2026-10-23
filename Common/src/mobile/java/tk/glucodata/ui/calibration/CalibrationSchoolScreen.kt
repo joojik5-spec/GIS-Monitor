@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -64,11 +66,12 @@ fun CalibrationSchoolScreen(
         else -> ctx.getString(tk.glucodata.R.string.cal_ok_title) to ctx.getString(tk.glucodata.R.string.cal_ok_text)
     }
     val ok = (hours >= 48 || hours < 0 && sp0.contains("ts")) && !stale && !unstable
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tk.glucodata.ui.components.TabScreenDefaults.contentPadding()),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(ctx.getString(tk.glucodata.R.string.nav_calibration), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        tk.glucodata.ui.components.TabScreenHeader(title = ctx.getString(tk.glucodata.R.string.nav_calibration))
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         // Сырое и итоговое значение берём из тех же данных, что и главный экран (после обработки алгоритмом датчика)
         val lastPt = history.lastOrNull { it.value > 0f }
@@ -104,26 +107,11 @@ fun CalibrationSchoolScreen(
                         )
                         Text(arrow, fontSize = 38.sp, color = MaterialTheme.colorScheme.primary)
                     }
-                    Text(ctx.getString(tk.glucodata.R.string.cal_unit_now, ctx.getString(if (mmol) tk.glucodata.R.string.cal_unit_mmol else tk.glucodata.R.string.cal_unit_mgdl)), fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(ctx.getString(tk.glucodata.R.string.cal_unit_now, ctx.getString(if (mmol) tk.glucodata.R.string.cal_unit_mmol else tk.glucodata.R.string.cal_unit_mgdl)), fontSize = 17.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (cal != null) Text(
                         ctx.getString(tk.glucodata.R.string.cal_before, f(raw)),
-                        fontSize = 14.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (userCals.isNotEmpty()) {
-                        Text(ctx.getString(tk.glucodata.R.string.cal_yours), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            ctx.getString(tk.glucodata.R.string.cal_yours_hint),
-                            fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        fun u(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
-                        userCals.sortedByDescending { it.timestamp }.take(3).forEach { c ->
-                            val t = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(c.timestamp))
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                Text(ctx.getString(tk.glucodata.R.string.cal_row, t, u(c.sensorValue), u(c.userValue)), fontSize = 14.sp, modifier = Modifier.weight(1f))
-                                TextButton(onClick = { scope.launch { tk.glucodata.data.calibration.CalibrationManager.deleteCalibration(c) } }) { Text(ctx.getString(tk.glucodata.R.string.cal_delete)) }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -132,7 +120,7 @@ fun CalibrationSchoolScreen(
         Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(ctx.getString(tk.glucodata.R.string.nav_calibration), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                Text(ctx.getString(tk.glucodata.R.string.cal_compare), fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(ctx.getString(tk.glucodata.R.string.cal_compare), fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 MeterPhotoButton(onTriggerCalibration)
                 val whenMs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) } // null = «сейчас»
                 val expanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -153,7 +141,7 @@ fun CalibrationSchoolScreen(
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
                             Text(
-                                ctx.getString(tk.glucodata.R.string.cal_time, java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(shownMs))),
+                                ctx.getString(tk.glucodata.R.string.cal_time, java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(shownMs))),
                                 fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f)
                             )
                             if (whenMs.value != null) {
@@ -162,10 +150,7 @@ fun CalibrationSchoolScreen(
                             Text(if (expanded.value) "\u25B4" else "\u25BE", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
                         }
                         androidx.compose.animation.AnimatedVisibility(visible = expanded.value) {
-                            TimeStepper(selected = shownMs, onChange = { ms -> if (Math.abs(ms - nowMs) < 60_000L) whenMs.value = null else setTime(ms) })
-                        }
-                        if (!expanded.value) {
-                            Text(ctx.getString(tk.glucodata.R.string.cal_time_hint), fontSize = 12.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            TimeStepper(selected = shownMs, onChange = { ms -> if (Math.abs(ms - nowMs) < 60_000L) whenMs.value = null else setTime(ms) }, showQuick = false, showDay = false)
                         }
                     }
                 }
@@ -176,12 +161,12 @@ fun CalibrationSchoolScreen(
                 fun fmt(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     OutlinedButton(
-                        onClick = { entry.value = (Math.round((entry.value - step) * 10f) / 10f).coerceAtLeast(step) },
+                        onClick = { haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove); entry.value = (Math.round((entry.value - step) * 10f) / 10f).coerceAtLeast(step) },
                         modifier = Modifier.weight(1f).height(60.dp)
                     ) { Text("−", fontSize = 26.sp) }
                     Text(fmt(entry.value), fontSize = 46.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.4f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     OutlinedButton(
-                        onClick = { entry.value = Math.round((entry.value + step) * 10f) / 10f },
+                        onClick = { haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove); entry.value = Math.round((entry.value + step) * 10f) / 10f },
                         modifier = Modifier.weight(1f).height(60.dp)
                     ) { Text("+", fontSize = 26.sp) }
                 }
@@ -215,7 +200,8 @@ fun CalibrationSchoolScreen(
                 ) { Text(ctx.getString(tk.glucodata.R.string.cal_save), fontSize = 18.sp, fontWeight = FontWeight.Bold) }
             }
         }
-        Text(ctx.getString(tk.glucodata.R.string.cal_how), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        if (userCals.isNotEmpty()) UserCalibrationsList(userCals, mmol, scope)
+        Text(ctx.getString(tk.glucodata.R.string.cal_how), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = tk.glucodata.ui.components.TabScreenDefaults.Gutter))
         listOf(
             "1" to ctx.getString(tk.glucodata.R.string.cal_step1),
             "2" to ctx.getString(tk.glucodata.R.string.cal_step2),
@@ -229,12 +215,9 @@ fun CalibrationSchoolScreen(
         }
         Text(
             ctx.getString(tk.glucodata.R.string.cal_dont),
-            fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            shape = MaterialTheme.shapes.extraLarge
-        ) {
+        Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(ctx.getString(tk.glucodata.R.string.cal_from_gis_title), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 Text(
@@ -327,7 +310,7 @@ private fun MeterPhotoButton(onTriggerCalibration: (tk.glucodata.ui.CalibrationS
     ) { Text(ctx.getString(if (busy.value) tk.glucodata.R.string.cal_reading else tk.glucodata.R.string.cal_photo)) }
     Text(
         ctx.getString(tk.glucodata.R.string.cal_photo_hint),
-        fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
+        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
 
@@ -354,3 +337,76 @@ private suspend fun readMeter(file: java.io.File, mmol: Boolean): Float? = try {
     } } }
     best?.let { if (mmol) it.first else it.first * 18.0182f }
 } catch (t: Throwable) { null }
+
+
+/** Сохранённые калибровки: крупные плашки сразу под кнопкой «Сохранить»; удаление свайпом справа налево, раз в 15 секунд еле заметная подсказка. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun UserCalibrationsList(
+    cals: List<tk.glucodata.data.calibration.CalibrationEntity>,
+    mmol: Boolean,
+    scope: kotlinx.coroutines.CoroutineScope
+) {
+    val ctx = LocalContext.current
+    val hint = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(15_000)
+            hint.snapTo(0f)
+            hint.animateTo(1f, androidx.compose.animation.core.tween(1400))
+            hint.snapTo(0f)
+        }
+    }
+    fun u(v: Float) = String.format(java.util.Locale.US, if (mmol) "%.1f" else "%.0f", v)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(ctx.getString(tk.glucodata.R.string.cal_yours), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = tk.glucodata.ui.components.TabScreenDefaults.Gutter))
+        cals.sortedByDescending { it.timestamp }.forEachIndexed { index, c ->
+            val state = androidx.compose.material3.rememberSwipeToDismissBoxState(
+                confirmValueChange = { v ->
+                    if (v == androidx.compose.material3.SwipeToDismissBoxValue.EndToStart) {
+                        scope.launch { tk.glucodata.data.calibration.CalibrationManager.deleteCalibration(c) }
+                        true
+                    } else false
+                }
+            )
+            androidx.compose.material3.SwipeToDismissBox(
+                state = state,
+                enableDismissFromStartToEnd = false,
+                backgroundContent = {
+                    Box(
+                        Modifier.fillMaxSize().clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(end = 22.dp),
+                        contentAlignment = androidx.compose.ui.Alignment.CenterEnd
+                    ) {
+                        androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.Delete, contentDescription = ctx.getString(tk.glucodata.R.string.cal_delete), tint = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                }
+            ) {
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(java.text.SimpleDateFormat("dd.MM  HH:mm", java.util.Locale.getDefault()).format(java.util.Date(c.timestamp)), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(ctx.getString(tk.glucodata.R.string.cal_row, "", u(c.sensorValue), u(c.userValue)).trimStart(' ', '·'), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                        if (index == 0 && hint.value > 0f) {
+                            val p = hint.value
+                            Row(
+                                Modifier.matchParentSize().padding(end = 18.dp).graphicsLayer { alpha = 0.05f * kotlin.math.sin(Math.PI.toFloat() * p) },
+                                horizontalArrangement = Arrangement.End, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Text("\u2190", fontSize = 30.sp, modifier = Modifier.graphicsLayer { translationX = -120.dp.toPx() * p })
+                                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.Delete, contentDescription = null)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1857,7 +1857,9 @@ fun SensorCard(
             .fillMaxWidth()
             .padding(horizontal = 0.dp, vertical = 4.dp), 
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(28.dp) 
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(28.dp)
     ) {
         // --- Dynamic Background Logic ---
         val now = System.currentTimeMillis()
