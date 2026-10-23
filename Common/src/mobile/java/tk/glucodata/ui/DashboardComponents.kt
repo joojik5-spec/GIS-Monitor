@@ -1402,7 +1402,7 @@ private fun HeroBigChart(
         }
         // подписи часов внизу, только в правой части (за стрелкой), где график яркий
         Row(
-            Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).padding(end = 0.dp, bottom = (HERO_PLOT_BOTTOM_DP - 6).dp),
+            Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).padding(end = 12.dp, bottom = (HERO_PLOT_BOTTOM_DP - 6).dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             for (i in 2..4) {
@@ -1412,6 +1412,16 @@ private fun HeroBigChart(
                     color = textColor.copy(alpha = 0.6f), maxLines = 1, softWrap = false
                 )
             }
+        }
+        // сахар на правом краю выбранного периода: при прокрутке показывает значение в этот момент
+        points.lastOrNull()?.let { last ->
+            Text(
+                text = String.format(java.util.Locale.getDefault(), if (isMmol) "%.1f" else "%.0f", last.value),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                color = gisRangeColor(last.value, isMmol, isDark),
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 14.dp)
+            )
         }
         // шкала сахара слева: яркие подписи поверх приглушённого графика, не чаще чем раз в 18dp
         if (points.size >= 2) androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {

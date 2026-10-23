@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -1060,8 +1061,9 @@ internal fun PinnedMetricChip(
                 scaleX = pressScale
                 scaleY = pressScale
             }
-            .clip(statsCardShape(16.dp * contentScale, 10.dp * contentScale))
+            .clip(RoundedCornerShape(20.dp * contentScale))
             .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), RoundedCornerShape(20.dp * contentScale))
             .then(
                 if (onClick != null) {
                     Modifier.clickable(
@@ -1083,7 +1085,7 @@ internal fun PinnedMetricChip(
         ) {
             Text(
                 text = spec.title,
-                style = MaterialTheme.typography.labelSmall.scalePinnedStyle(contentScale),
+                style = MaterialTheme.typography.labelMedium.scalePinnedStyle(contentScale),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -1698,8 +1700,9 @@ private fun PinnedWindowPill(
                 scaleX = pressScale
                 scaleY = pressScale
             }
-            .clip(statsCardShape(16.dp * contentScale, 10.dp * contentScale))
+            .clip(RoundedCornerShape(20.dp * contentScale))
             .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), RoundedCornerShape(20.dp * contentScale))
             .clickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
