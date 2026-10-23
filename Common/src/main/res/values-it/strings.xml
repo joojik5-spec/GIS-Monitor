@@ -3002,4 +3002,10 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="dexcom_share_auth_blocked">Accesso bloccato — controlla account e password</string>
     <string name="dexcom_share_credentials_required">Inserisci prima account e password</string>
     <string name="dexcom_share_warning">Interfaccia non ufficiale: Dexcom può modificarla o bloccarla in qualsiasi momento. Non è una funzione di un dispositivo medico.</string>
+    <string name="nav_glucose">Glicemia</string>
+    <string name="nav_calibration">Calibrazione</string>
+    <string name="nav_sensors">Sensori</string>
+    <string name="nav_settings">Impostazioni</string>
+    <string name="gis_broadcast">Trasmissione a GIS</string>
+    <string name="gis_broadcast_desc">Invia la glicemia all’app GIS su questo telefono</string>
 </resources>

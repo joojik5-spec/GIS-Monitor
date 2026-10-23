@@ -3092,4 +3092,10 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="dexcom_share_auth_blocked">Вхід заблоковано — перевірте обліковий запис і пароль</string>
     <string name="dexcom_share_credentials_required">Спочатку введіть обліковий запис і пароль</string>
     <string name="dexcom_share_warning">Неофіційний інтерфейс: Dexcom може змінити або заблокувати його будь-коли. Це не функція медичного виробу.</string>
+    <string name="nav_glucose">Глюкоза</string>
+    <string name="nav_calibration">Калібрування</string>
+    <string name="nav_sensors">Датчики</string>
+    <string name="nav_settings">Налаштування</string>
+    <string name="gis_broadcast">Трансляція в GIS</string>
+    <string name="gis_broadcast_desc">Передача цукру в застосунок GIS</string>
 </resources>

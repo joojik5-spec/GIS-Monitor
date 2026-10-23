@@ -3027,4 +3027,10 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="dexcom_share_auth_blocked">登录已被阻止——请检查账户和密码</string>
     <string name="dexcom_share_credentials_required">请先输入账户和密码</string>
     <string name="dexcom_share_warning">非官方接口：Dexcom 可能随时更改或封锁它。这不是医疗器械功能。</string>
+    <string name="nav_glucose">血糖</string>
+    <string name="nav_calibration">校准</string>
+    <string name="nav_sensors">传感器</string>
+    <string name="nav_settings">设置</string>
+    <string name="gis_broadcast">传输到 GIS</string>
+    <string name="gis_broadcast_desc">将血糖发送到本机上的 GIS 应用</string>
 </resources>

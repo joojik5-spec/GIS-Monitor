@@ -3013,4 +3013,10 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="dexcom_share_auth_blocked">Login bloqueado — verifique a conta e a senha</string>
     <string name="dexcom_share_credentials_required">Digite primeiro a conta e a senha</string>
     <string name="dexcom_share_warning">Interface não oficial: a Dexcom pode alterá-la ou bloqueá-la a qualquer momento. Este não é um recurso de dispositivo médico.</string>
+    <string name="nav_glucose">Glicose</string>
+    <string name="nav_calibration">Calibração</string>
+    <string name="nav_sensors">Sensores</string>
+    <string name="nav_settings">Definições</string>
+    <string name="gis_broadcast">Transmissão para o GIS</string>
+    <string name="gis_broadcast_desc">Envia a glicose para a app GIS neste telemóvel</string>
 </resources>

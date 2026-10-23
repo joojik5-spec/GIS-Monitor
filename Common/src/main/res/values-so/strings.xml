@@ -3197,4 +3197,10 @@ Marka la cadaadiyo OK waxay dhalin doontaa xidhiidh teleefankan oo waxa ay soo b
     <string name="dexcom_share_auth_blocked">Gelitaanka waa la xannibay — hubi akoonka iyo furaha sirta</string>
     <string name="dexcom_share_credentials_required">Marka hore geli akoonka iyo furaha sirta</string>
     <string name="dexcom_share_warning">Interface aan rasmi ahayn: Dexcom wuu beddeli karaa ama xannibi karaa wakhti kasta. Tani maaha hawl qalab caafimaad.</string>
+    <string name="nav_glucose">Sonkorta</string>
+    <string name="nav_calibration">Habaynta</string>
+    <string name="nav_sensors">Dareemayaasha</string>
+    <string name="nav_settings">Dejinta</string>
+    <string name="gis_broadcast">Gudbinta GIS</string>
+    <string name="gis_broadcast_desc">U dirta sonkorta app-ka GIS ee taleefankan</string>
 </resources>

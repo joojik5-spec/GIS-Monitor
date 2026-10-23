@@ -3087,4 +3087,10 @@ Az OK megnyomása létrehoz egy kapcsolatot ezen a telefonon, és megjelenít eg
     <string name="dexcom_share_auth_blocked">Bejelentkezés letiltva — ellenőrizze a fiókot és a jelszót</string>
     <string name="dexcom_share_credentials_required">Először adja meg a fiókot és a jelszót</string>
     <string name="dexcom_share_warning">Nem hivatalos felület: a Dexcom bármikor megváltoztathatja vagy letilthatja. Ez nem orvostechnikai eszköz funkciója.</string>
+    <string name="nav_glucose">Glükóz</string>
+    <string name="nav_calibration">Kalibrálás</string>
+    <string name="nav_sensors">Szenzorok</string>
+    <string name="nav_settings">Beállítások</string>
+    <string name="gis_broadcast">Továbbítás a GIS-nek</string>
+    <string name="gis_broadcast_desc">Glükózt küld a telefon GIS alkalmazásának</string>
 </resources>

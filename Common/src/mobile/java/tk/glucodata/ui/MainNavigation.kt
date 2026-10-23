@@ -821,10 +821,10 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
     // Define items for use in both Bar and Rail
     data class NavItem(val route: String, val label: String, val selectedIcon: ImageVector, val unselectedIcon: ImageVector)
     val navItems = buildList {
-        add(NavItem("dashboard", "Глюкоза", Icons.Filled.LegendToggle, Icons.Outlined.LegendToggle))
-        add(NavItem("school", "Калибровка", Icons.Filled.EditNote, Icons.Outlined.EditNote))
-        add(NavItem("sensors", "Датчики", androidx.compose.material.icons.Icons.Filled.Sensors, androidx.compose.material.icons.Icons.Outlined.Sensors))
-        add(NavItem("settings", "Настройки", Icons.Filled.Settings, Icons.Outlined.Settings))
+        add(NavItem("dashboard", androidx.compose.ui.res.stringResource(R.string.nav_glucose), Icons.Filled.LegendToggle, Icons.Outlined.LegendToggle))
+        add(NavItem("school", androidx.compose.ui.res.stringResource(R.string.nav_calibration), Icons.Filled.EditNote, Icons.Outlined.EditNote))
+        add(NavItem("sensors", androidx.compose.ui.res.stringResource(R.string.nav_sensors), androidx.compose.material.icons.Icons.Filled.Sensors, androidx.compose.material.icons.Icons.Outlined.Sensors))
+        add(NavItem("settings", androidx.compose.ui.res.stringResource(R.string.nav_settings), Icons.Filled.Settings, Icons.Outlined.Settings))
     }
 
     // One NavHost in one place for both orientations. Rotation is handled by this activity

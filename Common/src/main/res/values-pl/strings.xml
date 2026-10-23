@@ -3054,4 +3054,10 @@
     <string name="dexcom_share_auth_blocked">Logowanie zablokowane — sprawdź konto i hasło</string>
     <string name="dexcom_share_credentials_required">Najpierw wpisz konto i hasło</string>
     <string name="dexcom_share_warning">Nieoficjalny interfejs: Dexcom może go w każdej chwili zmienić lub zablokować. To nie jest funkcja wyrobu medycznego.</string>
+    <string name="nav_glucose">Glukoza</string>
+    <string name="nav_calibration">Kalibracja</string>
+    <string name="nav_sensors">Sensory</string>
+    <string name="nav_settings">Ustawienia</string>
+    <string name="gis_broadcast">Transmisja do GIS</string>
+    <string name="gis_broadcast_desc">Wysyła glukozę do aplikacji GIS na tym telefonie</string>
 </resources>

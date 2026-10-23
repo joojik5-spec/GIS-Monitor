@@ -3018,4 +3018,10 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="dexcom_share_auth_blocked">Connexion bloquée — vérifiez le compte et le mot de passe</string>
     <string name="dexcom_share_credentials_required">Saisissez d\'abord le compte et le mot de passe</string>
     <string name="dexcom_share_warning">Interface non officielle : Dexcom peut la modifier ou la bloquer à tout moment. Ce n\'est pas une fonction de dispositif médical.</string>
+    <string name="nav_glucose">Glycémie</string>
+    <string name="nav_calibration">Calibrage</string>
+    <string name="nav_sensors">Capteurs</string>
+    <string name="nav_settings">Réglages</string>
+    <string name="gis_broadcast">Diffusion vers GIS</string>
+    <string name="gis_broadcast_desc">Envoie la glycémie à l’application GIS sur ce téléphone</string>
 </resources>
