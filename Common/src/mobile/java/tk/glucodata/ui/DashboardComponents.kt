@@ -517,9 +517,8 @@ fun DashboardCombinedHeader(
     } else {
         heroValueColor
     }
-    val targetGlucoseContainerColor = glucoseTone?.let { tone ->
-        lerpColor(glucoseBaseContainerColor, tone.tint, tone.blendFraction)
-    } ?: glucoseBaseContainerColor
+    // Единый цвет всех плашек: без подкраски диапазоном (цвет сахара несёт само число и график)
+    val targetGlucoseContainerColor = glucoseBaseContainerColor
     val glucoseContainerColor by animateColorAsState(
         targetValue = targetGlucoseContainerColor,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
@@ -2056,7 +2055,7 @@ fun RecentReadingsCard(
         // replayed missed rows and were removed on the very next recomposition.
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             // User Request: "readings row card 2 bottom edges 4dp radius"
             // Top: 16dp (Standard), Bottom: 4dp (Continuity)
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 4.dp),

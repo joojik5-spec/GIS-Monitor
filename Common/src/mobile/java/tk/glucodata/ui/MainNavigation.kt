@@ -844,7 +844,7 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
                             .fillMaxWidth()
                             .height(70.dp),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(35.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.94f),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
                         tonalElevation = 6.dp,
                         shadowElevation = 14.dp,
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
