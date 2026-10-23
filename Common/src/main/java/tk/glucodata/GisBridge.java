@@ -25,6 +25,11 @@ public class GisBridge extends ContentProvider {
 
     /** Called for every new value (from SendLikexDrip.broadcastglucose). rate: mg/dL per minute * 60000 scale as in Juggluco. */
     public static void publish(double glucoseMgdl, float rate, long timeMs, long sensorStartMs, int sensorGen) {
+        publish(glucoseMgdl, rate, timeMs, sensorStartMs, sensorGen, 0L);
+    }
+
+    /** realEndMs — фактический конец работы датчика (как на плашках GIS Monitor); 0 — неизвестен, тогда по типу датчика. */
+    public static void publish(double glucoseMgdl, float rate, long timeMs, long sensorStartMs, int sensorGen, long realEndMs) {
         try {
             final Context c = Applic.app;
             if (c == null || !shareEnabled(c)) return;
@@ -34,7 +39,7 @@ public class GisBridge extends ContentProvider {
             c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putLong("ts", timeMs).putFloat("raw", (float) glucoseMgdl).putInt("trend", trend)
                 .putString("name", name(sensorGen)).putLong("start", sensorStartMs)
-                .putLong("end", sensorStartMs > 0 ? sensorStartMs + (sensorGen == 0x15 ? 22L : days) * 86_400_000L : 0L)
+                .putLong("end", realEndMs > sensorStartMs && sensorStartMs > 0 ? realEndMs : (sensorStartMs > 0 ? sensorStartMs + (sensorGen == 0x15 ? 22L : days) * 86_400_000L : 0L))
                 .apply();
             c.getContentResolver().notifyChange(Uri.parse("content://com.gismonitor.data/latest"), null);
         } catch (Throwable ignored) { }
@@ -52,7 +57,19 @@ public class GisBridge extends ContentProvider {
             if (start <= 0) {
                 try { start = Natives.getSensorStartmsec(Natives.getdataptr(p.getSensorId())); } catch (Throwable ignored) { }
             }
-            publish(raw, p.getRate(), p.getTimeMillis(), start, p.getSensorGen());
+            long end = 0L;
+            try {
+                final tk.glucodata.drivers.ManagedSensorUiSnapshot snap = tk.glucodata.drivers.ManagedSensorRuntime.resolveUiSnapshot(p.getSensorId(), null);
+                if (snap != null) end = snap.getExpectedEndMs() > 0 ? snap.getExpectedEndMs() : snap.getOfficialEndMs();
+            } catch (Throwable ignored) { }
+            if (end <= 0) {
+                try {
+                    final long ptr = Natives.getdataptr(p.getSensorId());
+                    end = Natives.getSensorEndTime(ptr, false);
+                    if (end <= 0) end = Natives.getSensorEndTime(ptr, true);
+                } catch (Throwable ignored) { }
+            }
+            publish(raw, p.getRate(), p.getTimeMillis(), start, p.getSensorGen(), end);
             final SharedPreferences.Editor e = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
             if (Math.abs(cal - raw) >= 1.0) e.putFloat("cal", (float) cal); else e.remove("cal");
             e.apply();
