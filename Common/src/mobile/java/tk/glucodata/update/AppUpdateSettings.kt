@@ -65,10 +65,8 @@ object AppUpdateSettings {
     }
 
     /** The https URL releases are read from. Defaults to this build's own project. */
-    fun updateSource(context: Context): String {
-        val stored = prefs(context).getString(KEY_SOURCE, null)
-        return stored?.takeIf { UpdateSource.isValid(it) } ?: defaultUpdateSource
-    }
+    @Suppress("UNUSED_PARAMETER")
+    fun updateSource(context: Context): String = defaultUpdateSource
 
     val defaultUpdateSource: String get() = "https://github.com/${BuildConfig.UPDATE_REPO}"
 

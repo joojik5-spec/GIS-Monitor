@@ -181,16 +181,8 @@ fun AppUpdatesScreen(navController: NavController) {
                 checked = state.autoCheckEnabled,
                 icon = Icons.Filled.NotificationsActive,
                 iconTint = MaterialTheme.colorScheme.secondary,
-                position = CardPosition.TOP,
+                position = CardPosition.SINGLE,
                 onCheckedChange = { AppUpdateController.setAutoCheckEnabled(context, it) }
-            )
-            SettingsItem(
-                title = stringResource(R.string.app_updates_source_title),
-                subtitle = state.updateSource,
-                icon = Icons.Filled.Link,
-                iconTint = MaterialTheme.colorScheme.secondary,
-                position = CardPosition.BOTTOM,
-                onClick = { showSourceDialog = true }
             )
 
             val notes = state.available?.notes?.trim().orEmpty()
@@ -210,18 +202,6 @@ fun AppUpdatesScreen(navController: NavController) {
                 }
             }
         }
-    }
-
-    if (showSourceDialog) {
-        UpdateSourceDialog(
-            current = state.updateSource,
-            isDefault = state.isDefaultUpdateSource,
-            onSave = {
-                AppUpdateController.setUpdateSource(context, it)
-                showSourceDialog = false
-            },
-            onDismiss = { showSourceDialog = false }
-        )
     }
 }
 
