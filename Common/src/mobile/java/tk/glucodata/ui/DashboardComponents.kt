@@ -1269,7 +1269,7 @@ private fun HeroChartControls(
                         .border(1.dp, color.copy(alpha = if (sel) 0.5f else 0.25f), RoundedCornerShape(50))
                         .clickable { onWindow(h) }
                         .padding(horizontal = 12.dp, vertical = 3.dp)
-                ) { Text("${h}ч", fontSize = 12.sp, color = color, fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal) }
+                ) { Text("${h}ч", fontSize = 12.sp, color = color, fontWeight = if (sel) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal) }
             }
         }
         if (maxOff > 0L) {
