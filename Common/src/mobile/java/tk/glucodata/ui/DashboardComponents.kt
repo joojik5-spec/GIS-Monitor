@@ -1,5 +1,6 @@
 package tk.glucodata.ui
 
+import androidx.compose.foundation.border
 import android.view.HapticFeedbackConstants
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.animation.animateColorAsState
@@ -85,6 +86,7 @@ import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.History
 import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.shrinkVertically
@@ -785,6 +787,19 @@ fun DashboardCombinedHeader(
                         }
                     }
                 } else {
+                    var heroWinH by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(6) }
+                    var heroOffMs by remember { mutableStateOf(0L) }
+                    Box(Modifier.fillMaxSize()) {
+                    HeroBigChart(
+                        history = history,
+                        isMmol = isMmol,
+                        textColor = glucoseContentColor,
+                        isDark = isDark,
+                        windowHours = heroWinH,
+                        offsetMs = heroOffMs,
+                        onOffset = { heroOffMs = it },
+                        modifier = Modifier.matchParentSize()
+                    )
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -833,18 +848,6 @@ fun DashboardCombinedHeader(
                                 rawText = heroRawText
                             )
 
-                            HeroMiniChart(
-                                history = history,
-                                isMmol = isMmol,
-                                lineColor = MaterialTheme.colorScheme.primary,
-                                textColor = glucoseContentColor,
-                                isDark = isDark,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(86.dp)
-                                    .padding(start = 14.dp)
-                                    .gisExtendEnd(resolvedEndPadding)
-                            )
                         }
 
                         if (peerReadings.isNotEmpty()) {
@@ -856,6 +859,15 @@ fun DashboardCombinedHeader(
                                 modifier = Modifier.padding(top = 4.dp)
                             )
                         }
+                        HeroChartControls(
+                            history = history,
+                            windowHours = heroWinH,
+                            onWindow = { heroWinH = it; heroOffMs = 0L },
+                            offsetMs = heroOffMs,
+                            onOffset = { heroOffMs = it },
+                            color = glucoseContentColor
+                        )
+                    }
                     }
                 }
             }
@@ -1099,24 +1111,20 @@ fun DashboardCombinedHeader(
         }
     }
 
-    // Плашка датчика закреплена вверху экрана (рисуется в MainNavigation), здесь только отдаём её данные
-    run {
-        val pillLifecycle = if (sensorHoursRemaining in 0L..24L) "$sensorHoursRemaining" + "ч" else daysRemaining
-        val pillStatusOnly = shouldShowDashboardSensorStatus(
-            isCloneSource = isCloneSource,
-            isFreshData = isFreshData,
-            sensorStatus = sensorStatus,
-            heroOwnsAwaitingStatus = resolvedDataState.isAwaitingData && statusCopy != null && pillLifecycle.isNotEmpty(),
-        )
-        val pillData = SensorPillData(
-            name = sensorDisplayName.ifEmpty { "Датчик" },
-            progress = sensorProgress,
-            text = if (pillStatusOnly) sensorStatus else pillLifecycle,
-            noise = trendResult.noiseLevel,
-            expiring = isExpiring
-        )
-        androidx.compose.runtime.SideEffect { SensorPillHolder.data = pillData }
-    }
+    val pillLifecycle = if (sensorHoursRemaining in 0L..24L) "$sensorHoursRemaining" + "ч" else daysRemaining
+    val pillStatusOnly = shouldShowDashboardSensorStatus(
+        isCloneSource = isCloneSource,
+        isFreshData = isFreshData,
+        sensorStatus = sensorStatus,
+        heroOwnsAwaitingStatus = resolvedDataState.isAwaitingData && statusCopy != null && pillLifecycle.isNotEmpty(),
+    )
+    val activePill = SensorPillData(
+        name = sensorDisplayName.ifEmpty { "Датчик" },
+        progress = sensorProgress,
+        text = if (pillStatusOnly) sensorStatus else pillLifecycle,
+        noise = trendResult.noiseLevel,
+        expiring = isExpiring
+    )
 
     if (isLandscape) {
         Column(
@@ -1128,6 +1136,7 @@ fun DashboardCombinedHeader(
         }
     } else {
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SensorPillsRow(activePill)
             heroCard(Modifier.fillMaxWidth())
             belowHero?.invoke()
         }
@@ -1139,11 +1148,52 @@ data class SensorPillData(val name: String, val progress: Float, val text: Strin
 
 object SensorPillHolder {
     var data by mutableStateOf<SensorPillData?>(null)
+    var openSensors: (() -> Unit)? = null
+}
+
+/** Плашки всех датчиков: у основного (с него идёт трансляция) зелёная точка, у остальных красная. Нажатие выбирает датчик, повторное открывает «Датчики». */
+@Composable
+fun SensorPillsRow(activePill: SensorPillData) {
+    val vm: tk.glucodata.ui.viewmodel.SensorViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    androidx.compose.runtime.DisposableEffect(Unit) { vm.startPolling(); onDispose { vm.stopPolling() } }
+    val list by vm.sensors.collectAsState()
+    val green = if (tk.glucodata.ui.isAppInDarkTheme()) Color(0xFF5ED08A) else Color(0xFF1B8F4E)
+    val red = if (tk.glucodata.ui.isAppInDarkTheme()) Color(0xFFFF6B6B) else Color(0xFFD32F2F)
+    if (list.size <= 1) {
+        Row(Modifier.fillMaxWidth().height(44.dp).clickable { SensorPillHolder.openSensors?.invoke() }) {
+            SensorPillBar(activePill, Modifier.fillMaxWidth().fillMaxHeight(), dot = green)
+        }
+        return
+    }
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        list.forEach { s ->
+            val now = System.currentTimeMillis()
+            val end = when {
+                s.expectedEndMs > 0 -> s.expectedEndMs
+                s.officialEndMs > 0 -> s.officialEndMs
+                s.startMs > 0 -> s.startMs + 14L * 86_400_000L
+                else -> 0L
+            }
+            val progress = if (s.startMs > 0 && end > s.startMs) ((now - s.startMs).toFloat() / (end - s.startMs)).coerceIn(0f, 1f) else 0f
+            val left = if (end > now) ((end - now) / 3_600_000L) else 0L
+            val txt = if (end <= 0L) "" else if (left < 24) "${left}ч" else "${left / 24}д"
+            val data = if (s.isActive) activePill.copy(name = s.displayName.ifBlank { s.serial }.ifBlank { activePill.name })
+                else SensorPillData(s.displayName.ifBlank { s.serial }, progress, txt, 0f, false)
+            Box(Modifier.width(210.dp).height(44.dp).clip(RoundedCornerShape(24.dp)).clickable {
+                if (s.isActive) SensorPillHolder.openSensors?.invoke() else vm.setMain(s.serial)
+            }) {
+                SensorPillBar(data, Modifier.fillMaxSize(), dot = if (s.isActive) green else red)
+            }
+        }
+    }
 }
 
 /** Закреплённая плашка датчика: имя, срок жизни, заливка по возрасту и уровень шума. */
 @Composable
-fun SensorPillBar(data: SensorPillData, modifier: Modifier = Modifier) {
+fun SensorPillBar(data: SensorPillData, modifier: Modifier = Modifier, dot: Color? = null) {
     val container = if (data.expiring) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer
     val content = if (data.expiring) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
     Card(
@@ -1167,6 +1217,7 @@ fun SensorPillBar(data: SensorPillData, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (dot != null) Box(Modifier.size(10.dp).background(dot, androidx.compose.foundation.shape.CircleShape))
                 Text(
                     text = data.name,
                     style = MaterialTheme.typography.titleSmall,
@@ -1191,6 +1242,138 @@ fun SensorPillBar(data: SensorPillData, modifier: Modifier = Modifier) {
  * Мини-график за час справа от числа: без осей и разделителей. Тянется пальцем по времени
  * (как нижний график), нажатие возвращает к текущему моменту.
  */
+private fun heroMaxOffset(history: List<GlucosePoint>, windowMs: Long): Long {
+    val newest = history.lastOrNull()?.timestamp ?: return 0L
+    val oldest = history.firstOrNull()?.timestamp ?: newest
+    return (newest - oldest - windowMs).coerceAtLeast(0L)
+}
+
+/** Масштаб (1/3/6/12 ч) и ползунок прокрутки графика карточки сахара. */
+@Composable
+private fun HeroChartControls(
+    history: List<GlucosePoint>,
+    windowHours: Int,
+    onWindow: (Int) -> Unit,
+    offsetMs: Long,
+    onOffset: (Long) -> Unit,
+    color: Color
+) {
+    val maxOff = heroMaxOffset(history, windowHours * 3_600_000L)
+    Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            listOf(1, 3, 6, 12).forEach { h ->
+                val sel = h == windowHours
+                Box(
+                    Modifier.clip(RoundedCornerShape(50))
+                        .background(if (sel) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f) else Color.Transparent)
+                        .border(1.dp, color.copy(alpha = if (sel) 0.5f else 0.25f), RoundedCornerShape(50))
+                        .clickable { onWindow(h) }
+                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                ) { Text("${h}ч", fontSize = 12.sp, color = color, fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal) }
+            }
+        }
+        if (maxOff > 0L) {
+            androidx.compose.material3.Slider(
+                value = 1f - (offsetMs.coerceIn(0L, maxOff).toFloat() / maxOff),
+                onValueChange = { onOffset(((1f - it) * maxOff).toLong()) },
+                modifier = Modifier.fillMaxWidth().height(28.dp),
+                colors = androidx.compose.material3.SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                    inactiveTrackColor = color.copy(alpha = 0.15f)
+                )
+            )
+        }
+    }
+}
+
+/** График на всю карточку сахара: слева еле заметный (10%), справа за стрелкой яркий; внизу подписи часов. */
+@Composable
+private fun HeroBigChart(
+    history: List<GlucosePoint>,
+    isMmol: Boolean,
+    textColor: Color,
+    isDark: Boolean,
+    windowHours: Int,
+    offsetMs: Long,
+    onOffset: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val windowMs = windowHours * 3_600_000L
+    val newest = history.lastOrNull()?.timestamp ?: return
+    val maxOffset = heroMaxOffset(history, windowMs)
+    val end = newest - offsetMs.coerceIn(0L, maxOffset)
+    val start = end - windowMs
+    val points = remember(history, start, end) { history.filter { it.timestamp in start..end && it.value > 0f } }
+    val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
+    Box(
+        modifier = modifier
+            .pointerInput(maxOffset, windowMs) {
+                detectHorizontalDragGestures { change, dx ->
+                    change.consume()
+                    onOffset((offsetMs + (dx / size.width.coerceAtLeast(1) * windowMs).toLong()).coerceIn(0L, maxOffset))
+                }
+            }
+    ) {
+        androidx.compose.foundation.Canvas(
+            Modifier.fillMaxSize()
+                .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(
+                        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            0f to Color.Black.copy(alpha = 0.12f),
+                            0.5f to Color.Black.copy(alpha = 0.12f),
+                            0.72f to Color.Black.copy(alpha = 1f),
+                            1f to Color.Black.copy(alpha = 1f)
+                        ),
+                        blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
+                    )
+                }
+        ) {
+            if (points.size < 2) return@Canvas
+            val minV0 = points.minOf { it.value }
+            val maxV0 = points.maxOf { it.value }
+            val minSpan = if (isMmol) 4f else 72f
+            val mid = (minV0 + maxV0) / 2f
+            val span = (maxV0 - minV0).coerceAtLeast(minSpan)
+            val lo = mid - span / 2f
+            val padTop = size.height * 0.12f
+            val padBot = size.height * 0.30f
+            val h = size.height - padTop - padBot
+            val r = 4.dp.toPx()
+            val w = size.width - r
+            fun px(pt: GlucosePoint) = androidx.compose.ui.geometry.Offset(
+                ((pt.timestamp - start).toFloat() / windowMs) * w,
+                padTop + h - ((pt.value - lo) / span) * h
+            )
+            for (i in 1 until points.size) {
+                if (points[i].timestamp - points[i - 1].timestamp > 20 * 60_000L) continue
+                drawLine(
+                    color = gisRangeColor(points[i].value, isMmol, isDark),
+                    start = px(points[i - 1]), end = px(points[i]),
+                    strokeWidth = 3.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+            }
+            val last = points.last()
+            if (offsetMs == 0L) drawCircle(gisRangeColor(last.value, isMmol, isDark), r, px(last))
+        }
+        // подписи часов внизу, только в правой части (за стрелкой), где график яркий
+        Row(
+            Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).padding(end = 8.dp, bottom = 40.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            for (i in 2..4) {
+                Text(
+                    text = fmt.format(java.util.Date(start + windowMs * i / 4)),
+                    style = androidx.compose.ui.text.TextStyle(fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp), fontFeatureSettings = "tnum"),
+                    color = textColor.copy(alpha = 0.6f), maxLines = 1, softWrap = false
+                )
+            }
+        }
+    }
+}
+
 /** Цвет сахара по международным диапазонам (ATTD/ADA): зелёный в норме, выше — жёлтый→оранжевый→красный, ниже — красный→бордовый. */
 internal fun gisRangeColor(value: Float, isMmol: Boolean, isDark: Boolean): Color {
     val mmol = if (isMmol) value else value / 18.016f

@@ -1,5 +1,7 @@
 package tk.glucodata.ui.calibration
 
+import tk.glucodata.Applic
+import androidx.compose.foundation.border
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -70,7 +72,12 @@ fun CalibrationSchoolScreen(
     ) {
         Text("Калибровка", fontSize = 30.sp, fontWeight = FontWeight.Bold)
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
-        val raw = sp.getFloat("raw", 0f).toDouble(); val cal = if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
+        // Сырое и итоговое значение берём из тех же данных, что и главный экран (после обработки алгоритмом датчика)
+        val lastPt = history.lastOrNull { it.value > 0f }
+        val kk = if (Applic.unit == 1) 18.0182 else 1.0
+        val rawPt = lastPt?.rawValue?.takeIf { it > 0f }
+        val raw = if (lastPt != null) (rawPt ?: lastPt.value).toDouble() * (if (isMmolNow) kk else 1.0) else sp.getFloat("raw", 0f).toDouble()
+        val cal = if (lastPt != null) { if (rawPt != null && Math.abs(lastPt.value - rawPt) > 0.04f) lastPt.value.toDouble() * (if (isMmolNow) kk else 1.0) else null } else if (sp.contains("cal")) sp.getFloat("cal", 0f).toDouble() else null
         // Ваши калибровки: только включённые, сделанные уже на этом датчике.
         val allCals by tk.glucodata.data.calibration.CalibrationManager.getCalibrationsFlow()
             .collectAsStateWithLifecycle(initialValue = tk.glucodata.data.calibration.CalibrationManager.getCachedCalibrations())
@@ -90,7 +97,10 @@ fun CalibrationSchoolScreen(
             Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                 Column(Modifier.padding(horizontal = 24.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(f(cal ?: raw), fontSize = 64.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            f(cal ?: raw), fontSize = 64.sp, fontWeight = FontWeight.Bold,
+                            modifier = if (cal != null) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(20.dp)).padding(horizontal = 14.dp, vertical = 2.dp) else Modifier
+                        )
                         Text(arrow, fontSize = 38.sp, color = MaterialTheme.colorScheme.primary)
                     }
                     Text((if (mmol) "ммоль/л" else "мг/дл") + " · сейчас", fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -112,55 +122,6 @@ fun CalibrationSchoolScreen(
                                 TextButton(onClick = { scope.launch { tk.glucodata.data.calibration.CalibrationManager.deleteCalibration(c) } }) { Text("Удалить") }
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        // 2. Датчик
-        val sensorEnd = sp.getLong("end", 0L)
-        Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(Modifier.padding(horizontal = 24.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text((sp.getString("name", "Датчик") ?: "Датчик").let { if (it == "Sensor") "Датчик" else it }, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                val totalDays = if (start > 0 && sensorEnd > start) ((sensorEnd - start) / 86_400_000L).toInt() else 0
-                val day = if (start > 0) (hours / 24).toInt() + 1 else 0
-                Text(
-                    if (day > 0 && totalDays > 0) "День ${day.coerceAtMost(totalDays)} из $totalDays" else "Возраст датчика пока не определён",
-                    fontSize = 17.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (start > 0 && sensorEnd > start) {
-                    LinearProgressIndicator(
-                        progress = { ((System.currentTimeMillis() - start).toFloat() / (sensorEnd - start).toFloat()).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
-                    )
-                }
-                run {
-                    val sensorVm: tk.glucodata.ui.viewmodel.SensorViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                    androidx.compose.runtime.DisposableEffect(Unit) { sensorVm.startPolling(); onDispose { sensorVm.stopPolling() } }
-                    val list by sensorVm.sensors.collectAsStateWithLifecycle()
-                    val rssi = (list.firstOrNull { it.streaming } ?: list.firstOrNull())?.rssi ?: 0
-                    val lastTs = sp.getLong("ts", 0L)
-                    val ageMin = if (lastTs > 0) (System.currentTimeMillis() - lastTs) / 60_000L else -1L
-                    val level = when {
-                        ageMin < 0 || ageMin > 15 -> 0
-                        rssi in -69..-1 -> 4
-                        rssi in -80..-70 -> 3
-                        rssi in -90..-81 -> 2
-                        rssi < -90 -> 1
-                        else -> 4
-                    }
-                    val word = when (level) { 4 -> "Отличный"; 3 -> "Хороший"; 2 -> "Средний"; 1 -> "Слабый"; else -> "Нет связи" }
-                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
-                            for (i in 1..4) Box(
-                                Modifier.width(6.dp).height((6 + i * 5).dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                                    .background(if (i <= level) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
-                            )
-                        }
-                        Text(
-                            "Сигнал: $word" + (if (rssi in -120..-1 && level > 0) " ($rssi дБм)" else if (ageMin > 15) " (данных нет $ageMin мин)" else ""),
-                            fontSize = 16.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
             }

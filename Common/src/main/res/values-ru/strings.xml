@@ -3063,6 +3063,6 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="medtrum_setup_device_rejected">Это устройство не является патчем Medtrum. Убедитесь, что патч рядом, и повторите попытку.</string>
 
     <string name="alert_sound_volume">Громкость звука тревоги</string>
-    <string name="gis_broadcast">GIS</string>
-    <string name="gis_broadcast_desc">Сахар уходит в приложение GIS на этом телефоне, без интернета</string>
+    <string name="gis_broadcast">Трансляция в GIS</string>
+    <string name="gis_broadcast_desc">Передача сахара в приложение GIS</string>
 </resources>

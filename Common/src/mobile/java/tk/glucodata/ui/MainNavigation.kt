@@ -823,6 +823,7 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
     val navItems = buildList {
         add(NavItem("dashboard", "Глюкоза", Icons.Filled.LegendToggle, Icons.Outlined.LegendToggle))
         add(NavItem("school", "Калибровка", Icons.Filled.EditNote, Icons.Outlined.EditNote))
+        add(NavItem("sensors", "Датчики", androidx.compose.material.icons.Icons.Filled.Sensors, androidx.compose.material.icons.Icons.Outlined.Sensors))
         add(NavItem("settings", "Настройки", Icons.Filled.Settings, Icons.Outlined.Settings))
     }
 
@@ -972,35 +973,13 @@ private fun NavGraphBuilder.appDestinations(
     onTriggerCalibration: (CalibrationSheetState) -> Unit,
 ) {
     composable("dashboard") {
-        Box(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().statusBarsPadding().padding(top = 52.dp)) {
-                DashboardRoute(
-                    dashboardViewModel = dashboardViewModel,
-                    navController = navController,
-                    onTriggerCalibration = onTriggerCalibration
-                )
-            }
-            // «+» вверху: добавить ещё один датчик (раздел «Датчики» убран из меню, всё начинается с главного экрана)
-            androidx.compose.foundation.layout.Row(
-                modifier = Modifier.align(androidx.compose.ui.Alignment.TopStart).fillMaxWidth()
-                    .statusBarsPadding().padding(top = 6.dp, start = 16.dp, end = 12.dp),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
-            ) {
-                // закреплённая плашка датчика: не уезжает при прокрутке страницы
-                val pill = SensorPillHolder.data
-                if (pill != null) SensorPillBar(pill, Modifier.weight(1f).height(44.dp))
-                else androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                androidx.compose.material3.Text(
-                    "Датчики",
-                    fontSize = 20.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                androidx.compose.material3.FilledTonalIconButton(
-                    onClick = { navController.navigate("sensors") }
-                ) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Add, contentDescription = "Добавить датчик") }
-            }
+        SensorPillHolder.openSensors = { navController.navigate("sensors") }
+        Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            DashboardRoute(
+                dashboardViewModel = dashboardViewModel,
+                navController = navController,
+                onTriggerCalibration = onTriggerCalibration
+            )
         }
     }
     composable("history") {

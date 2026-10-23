@@ -3267,6 +3267,6 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="nightscout_iob_help">eIOB and COB are sent in the jugglucong field of devicestatus, separately from standard IOB.</string>
 
     <string name="alert_sound_volume">Alert sound volume</string>
-    <string name="gis_broadcast">GIS</string>
-    <string name="gis_broadcast_desc">Sends glucose to the GIS app on this phone, no internet</string>
+    <string name="gis_broadcast">Broadcast to GIS</string>
+    <string name="gis_broadcast_desc">Sends glucose to the GIS app on this phone</string>
 </resources>
