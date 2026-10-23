@@ -564,7 +564,7 @@ fun SensorCard(
                             val safeId = sensor.serial.filter(Char::isLetterOrDigit)
                                 .ifBlank { "CT5" }
                             anytimeCredentialExportLauncher.launch(
-                                "JugglucoNG-Anytime-$safeId.json"
+                                "GISMonitor-Anytime-$safeId.json"
                             )
                         }
                     },
@@ -1685,7 +1685,7 @@ fun SensorCard(
                             pendingAiDexKeyBackup = payload
                             val bareSerial = tk.glucodata.drivers.aidex.native.protocol.AiDexPairKeyBackup
                                 .canonicalBareSerial(sensor.serial)
-                            aiDexKeyExportLauncher.launch("JugglucoNG-AiDex-$bareSerial.aidexkey")
+                            aiDexKeyExportLauncher.launch("GISMonitor-AiDex-$bareSerial.aidexkey")
                         }
                     },
                     shapes = ButtonDefaults.shapes(),

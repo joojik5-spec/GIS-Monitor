@@ -257,7 +257,6 @@ fun SensorScreen(
     val adaptiveMetrics = rememberAdaptiveWindowMetrics()
     val compactLayout = adaptiveMetrics.isCompact
     val panelPadding = 16.dp
-    val fabPadding = 16.dp
     
     // Start/stop real-time polling based on screen visibility.
     // Tied to the lifecycle, not just to composition: this screen is a tab, so leaving the
@@ -499,10 +498,20 @@ fun SensorScreen(
             }
         } else {
             // LazyColumn with header that scrolls
+            val sensorListState = rememberLazyListState()
+            val focusSerial = SensorPillHolder.focusSerial
+            LaunchedEffect(focusSerial, sensors.size) {
+                val idx = sensors.indexOfFirst { it.serial == focusSerial }
+                if (idx >= 0) {
+                    sensorListState.animateScrollToItem(idx + 2)
+                    SensorPillHolder.focusSerial = null
+                }
+            }
             LazyColumn(
+                state = sensorListState,
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
-                contentPadding = TabScreenDefaults.contentPadding(hasFab = true)
+                contentPadding = TabScreenDefaults.contentPadding(hasFab = false)
             ) {
                 // Scrollable header
                 item {
@@ -527,22 +536,5 @@ fun SensorScreen(
             }
         }
         
-        // FAB overlay - only show when sensors exist
-        if (sensors.isNotEmpty()) {
-            FloatingActionButton(
-                onClick = { showSensorPicker = true },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(fabPadding)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
     }
 }

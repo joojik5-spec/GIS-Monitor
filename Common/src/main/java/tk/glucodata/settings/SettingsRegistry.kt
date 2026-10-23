@@ -24,7 +24,7 @@ const val KEY_SENSOR_COLORS = "sensor_color_overrides_argb"
 
 // The defaults, declared once (plan §2.4). Before this, prediction-horizon 120 lived in four files
 // and carb-absorption 35 in five, all agreeing only by hand.
-const val DEFAULT_SMOOTHING_MINUTES = 0
+const val DEFAULT_SMOOTHING_MINUTES = 5
 const val DEFAULT_SMOOTHING_GRAPH_ONLY = false
 const val DEFAULT_SMOOTHING_COLLAPSE_CHUNKS = false
 const val DEFAULT_SMOOTHING_EXCHANGE_OUTPUTS_ONLY = false

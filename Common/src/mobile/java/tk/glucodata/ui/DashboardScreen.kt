@@ -1147,6 +1147,7 @@ fun DashboardScreen(
             val maxChartBoostPx = with(density) { maxChartBoostDp.toPx() }
 
             val chartBoostState = rememberSaveable { mutableFloatStateOf(0f) }
+            var showMainChart by rememberSaveable { mutableStateOf(false) }
             val chartExpansionGestureGate = remember { DashboardChartExpansionGestureGate() }
 
             val scope = rememberCoroutineScope()
@@ -1493,6 +1494,7 @@ fun DashboardScreen(
                                 arrowForecastColorsEnabled = glucoseArrowForecastEnabled,
                                 quietWindowUntilMs = quietWindowUntilMs,
                                 onQuietWindowClick = onNavigateToQuietWindow,
+                                onChartClick = { showMainChart = !showMainChart },
                                 onHeroClick = {
                                     val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
                                     val rawVal = latestPoint?.rawValue ?: autoVal
@@ -1808,6 +1810,7 @@ fun DashboardScreen(
                                     { FontScaleCap(max = 0.82f) { tk.glucodata.ui.stats.PinnedStatsStrip(windowState = pinnedStatsWindow) } }
                                 } else null,
                                 onQuietWindowClick = onNavigateToQuietWindow,
+                                onChartClick = { showMainChart = !showMainChart },
                                 onHeroClick = {
                                     val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
                                     val rawVal = latestPoint?.rawValue ?: autoVal
@@ -1842,6 +1845,7 @@ fun DashboardScreen(
                 }
 
                 item {
+                    if (!showMainChart) return@item
                     // Every scroll-driven value is read here rather than in the screen
                     // body, so a scroll invalidates this item and nothing else.
                     val collapseFraction = collapseFractionState.value

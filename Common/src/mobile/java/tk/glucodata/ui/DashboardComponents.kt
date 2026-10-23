@@ -256,6 +256,7 @@ fun DashboardCombinedHeader(
     peerReadings: List<tk.glucodata.ui.viewmodel.DashboardViewModel.PeerCurrentReading> = emptyList(),
     onPeerReadingClick: (String) -> Unit = {},
     onHeroClick: () -> Unit = {},
+    onChartClick: () -> Unit = {},
     // The alarm quiet window: 0 = none, and then nothing is drawn. A running one
     // shows as a chip with its end time; tapping it opens the quiet-window screen.
     quietWindowUntilMs: Long = 0L,
@@ -798,8 +799,24 @@ fun DashboardCombinedHeader(
                         windowHours = heroWinH,
                         offsetMs = heroOffMs,
                         onOffset = { heroOffMs = it },
+                        onTap = onChartClick,
+                        onLeftTap = onHeroClick,
                         modifier = Modifier.matchParentSize()
                     )
+                    if (!heroRawText.isNullOrEmpty()) {
+                        androidx.compose.material3.Text(
+                            text = heroRawText,
+                            style = androidx.compose.ui.text.TextStyle(
+                                fontSize = androidx.compose.ui.unit.TextUnit(17f, androidx.compose.ui.unit.TextUnitType.Sp),
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                fontFeatureSettings = "tnum"
+                            ),
+                            color = glucoseContentColor.copy(alpha = 0.75f),
+                            softWrap = false,
+                            maxLines = 1,
+                            modifier = Modifier.align(Alignment.TopEnd).padding(top = resolvedVerticalPadding, end = resolvedEndPadding)
+                        )
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -814,7 +831,7 @@ fun DashboardCombinedHeader(
                     ) {
                         // Изменение за 1 и 5 минут: мелко, в левом верхнем углу карточки
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            HeroDeltaMini("5м", heroDelta5, glucoseContentColor)
+                            HeroDeltaMini(stringResource(R.string.hero_delta_5m), heroDelta5, glucoseContentColor)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -844,8 +861,7 @@ fun DashboardCombinedHeader(
                                 delta1Text = null,
                                 delta5Text = null,
                                 contentColor = glucoseContentColor,
-                                iconSize = resolvedTrendIconSize,
-                                rawText = heroRawText
+                                iconSize = resolvedTrendIconSize
                             )
 
                         }
@@ -1149,6 +1165,8 @@ data class SensorPillData(val name: String, val progress: Float, val text: Strin
 object SensorPillHolder {
     var data by mutableStateOf<SensorPillData?>(null)
     var openSensors: (() -> Unit)? = null
+    /** Серийный номер датчика, к которому «Датчики» должны прокрутиться после нажатия на плашку. */
+    var focusSerial by mutableStateOf<String?>(null)
 }
 
 /** Плашки всех датчиков: у основного (с него идёт трансляция) зелёная точка, у остальных красная. Нажатие выбирает датчик, повторное открывает «Датчики». */
@@ -1174,16 +1192,17 @@ fun SensorPillsRow(activePill: SensorPillData) {
             val end = when {
                 s.expectedEndMs > 0 -> s.expectedEndMs
                 s.officialEndMs > 0 -> s.officialEndMs
-                s.startMs > 0 -> s.startMs + 14L * 86_400_000L
                 else -> 0L
             }
             val progress = if (s.startMs > 0 && end > s.startMs) ((now - s.startMs).toFloat() / (end - s.startMs)).coerceIn(0f, 1f) else 0f
             val left = if (end > now) ((end - now) / 3_600_000L) else 0L
-            val txt = if (end <= 0L) "" else if (left < 24) "${left}ч" else "${left / 24}д"
-            val data = if (s.isActive) activePill.copy(name = s.displayName.ifBlank { s.serial }.ifBlank { activePill.name })
+            val txt = if (end <= 0L) "" else if (left < 24) stringResource(R.string.pill_hours_short, left) else stringResource(R.string.pill_days_short, left / 24)
+            val data = if (s.isActive) activePill.copy(name = s.displayName.ifBlank { s.serial }.ifBlank { activePill.name }, progress = progress, text = txt.ifEmpty { activePill.text })
                 else SensorPillData(s.displayName.ifBlank { s.serial }, progress, txt, 0f, false)
             Box(Modifier.width(210.dp).height(44.dp).clip(RoundedCornerShape(24.dp)).clickable {
-                if (s.isActive) SensorPillHolder.openSensors?.invoke() else vm.setMain(s.serial)
+                if (!s.isActive) vm.setMain(s.serial)
+                SensorPillHolder.focusSerial = s.serial
+                SensorPillHolder.openSensors?.invoke()
             }) {
                 SensorPillBar(data, Modifier.fillMaxSize(), dot = if (s.isActive) green else red)
             }
@@ -1269,7 +1288,7 @@ private fun HeroChartControls(
                         .border(1.dp, color.copy(alpha = if (sel) 0.5f else 0.25f), RoundedCornerShape(50))
                         .clickable { onWindow(h) }
                         .padding(horizontal = 12.dp, vertical = 3.dp)
-                ) { Text("${h}ч", fontSize = 12.sp, color = color, fontWeight = if (sel) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal) }
+                ) { Text(stringResource(R.string.pill_hours_short, h), fontSize = 12.sp, color = color, fontWeight = if (sel) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal) }
             }
         }
         if (maxOff > 0L) {
@@ -1297,6 +1316,8 @@ private fun HeroBigChart(
     windowHours: Int,
     offsetMs: Long,
     onOffset: (Long) -> Unit,
+    onTap: () -> Unit = {},
+    onLeftTap: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val windowMs = windowHours * 3_600_000L
@@ -1308,6 +1329,7 @@ private fun HeroBigChart(
     val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
     Box(
         modifier = modifier
+            .pointerInput(Unit) { detectTapGestures { if (it.x > size.width * 0.5f) onTap() else onLeftTap() } }
             .pointerInput(maxOffset, windowMs) {
                 detectHorizontalDragGestures { change, dx ->
                     change.consume()
@@ -1501,7 +1523,7 @@ private fun HeroTrendWithDelta(
                 maxLines = 1
             )
         }
-        HeroDeltaMini("5м", delta5Text, contentColor)
+        HeroDeltaMini(stringResource(R.string.hero_delta_5m), delta5Text, contentColor)
         tk.glucodata.ui.components.TrendIndicator(
             trendResult = trendResult,
             modifier = Modifier.size(iconSize),
