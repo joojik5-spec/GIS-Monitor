@@ -1147,7 +1147,6 @@ fun DashboardScreen(
             val maxChartBoostPx = with(density) { maxChartBoostDp.toPx() }
 
             val chartBoostState = rememberSaveable { mutableFloatStateOf(0f) }
-            var showMainChart by rememberSaveable { mutableStateOf(false) }
             val chartExpansionGestureGate = remember { DashboardChartExpansionGestureGate() }
 
             val scope = rememberCoroutineScope()
@@ -1494,7 +1493,6 @@ fun DashboardScreen(
                                 arrowForecastColorsEnabled = glucoseArrowForecastEnabled,
                                 quietWindowUntilMs = quietWindowUntilMs,
                                 onQuietWindowClick = onNavigateToQuietWindow,
-                                onChartClick = { showMainChart = !showMainChart },
                                 onHeroClick = {
                                     val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
                                     val rawVal = latestPoint?.rawValue ?: autoVal
@@ -1810,7 +1808,6 @@ fun DashboardScreen(
                                     { FontScaleCap(max = 0.82f) { tk.glucodata.ui.stats.PinnedStatsStrip(windowState = pinnedStatsWindow) } }
                                 } else null,
                                 onQuietWindowClick = onNavigateToQuietWindow,
-                                onChartClick = { showMainChart = !showMainChart },
                                 onHeroClick = {
                                     val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
                                     val rawVal = latestPoint?.rawValue ?: autoVal
@@ -1843,150 +1840,6 @@ fun DashboardScreen(
                         )
                     }
                 }
-
-                item {
-                    if (!showMainChart) return@item
-                    // Every scroll-driven value is read here rather than in the screen
-                    // body, so a scroll invalidates this item and nothing else.
-                    val collapseFraction = collapseFractionState.value
-                    val chartBoostProgress = chartBoostState.floatValue
-                    val chartHeightBoostDp = with(density) {
-                        (chartBoostProgress * maxChartBoostPx).toDp()
-                    }
-                    // The card's inset and its colour used to be animated by two springs
-                    // of different stiffness. Mid-transition the chart was already inset
-                    // while still painted the screen background — the stray patch of
-                    // shade during expand and collapse. One spring drives both now, so
-                    // the shape and the colour can no longer disagree.
-                    val animatedCollapse by animateFloatAsState(
-                        targetValue = collapseFraction,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMediumLow
-                        ),
-                        label = "DashboardChartCollapse"
-                    )
-                    val expandedProgress = (1f - animatedCollapse).coerceIn(0f, 1f)
-
-                    // Portrait chart sizing is anchored to explicit visible-row budgets:
-                    // top state shows ~3-4 rows, middle shows ~1-2, fullscreen hides the list.
-                    val chartItemHeightTarget = (boundedCollapsedChartItemHeight + chartHeightBoostDp)
-                        .coerceIn(boundedCollapsedChartItemHeight, boundedFullscreenChartItemHeight)
-                    val animatedChartHorizontalPadding = collapsedChartHorizontalPadding * animatedCollapse
-                    val animatedChartItemHeight by animateDpAsState(
-                                targetValue = chartItemHeightTarget,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessLow
-                        ),
-                        label = "DashboardChartItemHeight"
-                                )
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = animatedChartHorizontalPadding.coerceAtLeast(0.dp))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(animatedChartItemHeight)
-                        ) {
-                            key(sensorName) {
-                                FontScaleCap {
-                                    DashboardChartSection(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(bottom = 0.dp),
-                                        glucoseHistory = glucoseHistory,
-                                        dataBounds = chartDataBounds,
-                                        onVisibleRangeChanged = viewModel::onChartViewportChanged,
-                                        multiSensorDisplay = multiSensorDisplay,
-                                        mainSensorOwnership = mainSensorOwnership,
-                                        peerPredictionSeries = peerPredictionSeries,
-                                        journalMarkers = journalChartMarkers,
-                                        activeInsulinSummary = activeInsulinSummary,
-                                        activeCarbsGrams = activeCarbsGrams,
-                                        stateDoseHint = stateDoseHint,
-                                        activeInsulinFromRemote = activeInsulinFromRemote,
-                                        showEiob = journalEiobDisplayEnabled,
-                                        appChartRangeColors = appChartRangeColorsEnabled,
-                                        predictionSeries = predictionSeries,
-                                        graphSmoothingMinutes = visualSmoothingMinutes,
-                                        collapseSmoothedData = dataSmoothingCollapseChunks,
-                                        previewWindowMode = previewWindowMode,
-                                        graphLow = graphLow,
-                                        graphHigh = graphHigh,
-                                        targetLow = targetLow,
-                                        targetHigh = targetHigh,
-                                        unit = unit,
-                                        veryLowThreshold = veryLowThreshold,
-                                        veryHighThreshold = veryHighThreshold,
-                                        calibrations = calibrations,
-                                        viewMode = viewMode,
-                                        onTimeRangeSelected = { timeRange = it },
-                                        selectedTimeRange = timeRange,
-                                        isExpanded = isChartExpanded,
-                                        expandedProgress = expandedProgress,
-                                        expandedUnderlayBottom = 0.dp,
-                                        onToggleExpanded = null,
-                                        chartBoostProgress = chartBoostProgress,
-                                        onPointClick = { point ->
-                                            clearJournalAction()
-                                            triggerCalibrationIfEnabled(
-                                                CalibrationSheetState.New(
-                                                    point.value,
-                                                    point.rawValue,
-                                                    point.timestamp,
-                                                    point.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
-                                                )
-                                            )
-                                        },
-                                        onCalibrationClick = { cal ->
-                                            clearJournalAction()
-                                            triggerCalibrationIfEnabled(CalibrationSheetState.Edit(cal))
-                                        },
-                                        onTimelineTap = { suggestion ->
-                                            if (journalEnabled) {
-                                                showJournalAction(suggestion)
-                                            }
-                                        },
-                                        journalActionTimestamp = if (journalEnabled) journalActionTimestamp else null,
-                                        journalActionDisplayValue = if (journalEnabled) journalActionSuggestedDisplayValue else null,
-                                        journalActionAnchor = journalActionAnchor,
-                                        onDismissJournalAction = { clearJournalAction() },
-                                        onJournalMarkerClick = { entryId ->
-                                            journalEntriesById[entryId]?.let { entry ->
-                                                clearJournalAction()
-                                                lastJournalType = entry.type
-                                                journalEditorRequest = JournalEditorRequest(entry.type, entry.timestamp, entry)
-                                            }
-                                        },
-                                        onViewportSnapshotChanged = { dashboardChartViewport = it }
-                                    )
-                                }
-                            }
-                            JournalFloatingActionMenu(
-                                selectedTimestamp = journalActionTimestamp?.takeIf { journalEnabled },
-                                anchor = journalActionAnchor,
-                                onDismissRequest = { clearJournalAction() },
-                                onTypeSelected = { type, actionTimestamp ->
-                                    lastJournalType = type
-                                    val suggestedGlucoseMgDl = journalActionSuggestedGlucoseMgDl
-                                    val suggestedAmountFraction = journalActionSuggestedAmountFraction
-                                    clearJournalAction()
-                                    journalEditorRequest = JournalEditorRequest(
-                                        type = type,
-                                        timestamp = actionTimestamp,
-                                        suggestedGlucoseMgDl = suggestedGlucoseMgDl,
-                                        suggestedChartAnchorGlucoseMgDl = suggestedGlucoseMgDl,
-                                        suggestedAmountFraction = suggestedAmountFraction
-                                    )
-                                }
-                            )
-                        }
-                    }
-
-}
-
 
                 item {
                     Column(modifier = Modifier.fillMaxWidth()) {

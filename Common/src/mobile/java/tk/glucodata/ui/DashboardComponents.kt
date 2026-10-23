@@ -1278,6 +1278,7 @@ private fun HeroChartControls(
     color: Color
 ) {
     val maxOff = heroMaxOffset(history, windowHours * 3_600_000L)
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             listOf(1, 3, 6, 12).forEach { h ->
@@ -1294,7 +1295,11 @@ private fun HeroChartControls(
         if (maxOff > 0L) {
             androidx.compose.material3.Slider(
                 value = 1f - (offsetMs.coerceIn(0L, maxOff).toFloat() / maxOff),
-                onValueChange = { onOffset(((1f - it) * maxOff).toLong()) },
+                onValueChange = {
+                    val new = ((1f - it) * maxOff).toLong()
+                    if (new / (windowHours * 300_000L) != offsetMs / (windowHours * 300_000L)) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    onOffset(new)
+                },
                 modifier = Modifier.fillMaxWidth().height(28.dp),
                 colors = androidx.compose.material3.SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
@@ -1327,13 +1332,20 @@ private fun HeroBigChart(
     val start = end - windowMs
     val points = remember(history, start, end) { history.filter { it.timestamp in start..end && it.value > 0f } }
     val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val currentOffset by androidx.compose.runtime.rememberUpdatedState(offsetMs)
+    val (scaleLo, scaleSpan) = remember(points, isMmol) { heroScale(points, isMmol) }
+    val labelColor = textColor.copy(alpha = 0.75f).toArgb()
     Box(
         modifier = modifier
             .pointerInput(Unit) { detectTapGestures { if (it.x > size.width * 0.5f) onTap() else onLeftTap() } }
             .pointerInput(maxOffset, windowMs) {
                 detectHorizontalDragGestures { change, dx ->
                     change.consume()
-                    onOffset((offsetMs + (dx / size.width.coerceAtLeast(1) * windowMs).toLong()).coerceIn(0L, maxOffset))
+                    val old = currentOffset
+                    val new = (old + (dx / size.width.coerceAtLeast(1) * windowMs).toLong()).coerceIn(0L, maxOffset)
+                    if (new / (windowMs / 12) != old / (windowMs / 12)) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    onOffset(new)
                 }
             }
     ) {
@@ -1344,8 +1356,8 @@ private fun HeroBigChart(
                     drawContent()
                     drawRect(
                         brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
-                            0f to Color.Black.copy(alpha = 0.12f),
-                            0.5f to Color.Black.copy(alpha = 0.12f),
+                            0f to Color.Black.copy(alpha = 0.05f),
+                            0.5f to Color.Black.copy(alpha = 0.05f),
                             0.72f to Color.Black.copy(alpha = 1f),
                             1f to Color.Black.copy(alpha = 1f)
                         ),
@@ -1354,17 +1366,24 @@ private fun HeroBigChart(
                 }
         ) {
             if (points.size < 2) return@Canvas
-            val minV0 = points.minOf { it.value }
-            val maxV0 = points.maxOf { it.value }
-            val minSpan = if (isMmol) 4f else 72f
-            val mid = (minV0 + maxV0) / 2f
-            val span = (maxV0 - minV0).coerceAtLeast(minSpan)
-            val lo = mid - span / 2f
+            val lo = scaleLo
+            val span = scaleSpan
             val padTop = size.height * 0.12f
-            val padBot = size.height * 0.30f
+            val padBot = (HERO_PLOT_BOTTOM_DP.dp.toPx()).coerceAtMost(size.height * 0.5f)
             val h = size.height - padTop - padBot
             val r = 4.dp.toPx()
             val w = size.width - r
+            // разграничители по времени только в правой (яркой) половине; крайний справа — «сейчас»
+            for (i in 2..4) {
+                val x = w * i / 4f
+                drawLine(
+                    color = textColor.copy(alpha = if (i == 4) 0.55f else 0.22f),
+                    start = androidx.compose.ui.geometry.Offset(x, padTop),
+                    end = androidx.compose.ui.geometry.Offset(x, padTop + h),
+                    strokeWidth = if (i == 4) 1.5.dp.toPx() else 1.dp.toPx(),
+                    pathEffect = if (i == 4) null else androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6f, 6f))
+                )
+            }
             fun px(pt: GlucosePoint) = androidx.compose.ui.geometry.Offset(
                 ((pt.timestamp - start).toFloat() / windowMs) * w,
                 padTop + h - ((pt.value - lo) / span) * h
@@ -1382,7 +1401,7 @@ private fun HeroBigChart(
         }
         // подписи часов внизу, только в правой части (за стрелкой), где график яркий
         Row(
-            Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).padding(end = 8.dp, bottom = 40.dp),
+            Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).padding(end = 0.dp, bottom = (HERO_PLOT_BOTTOM_DP - 6).dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             for (i in 2..4) {
@@ -1393,7 +1412,38 @@ private fun HeroBigChart(
                 )
             }
         }
+        // шкала сахара слева: яркие подписи поверх приглушённого графика, не чаще чем раз в 18dp
+        if (points.size >= 2) androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+            val padTop = size.height * 0.12f
+            val padBot = (HERO_PLOT_BOTTOM_DP.dp.toPx()).coerceAtMost(size.height * 0.5f)
+            val h = size.height - padTop - padBot
+            val step = if (isMmol) (if (scaleSpan > 9f) 2f else 1f) else (if (scaleSpan > 160f) 40f else 20f)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                color = labelColor; textSize = 10.sp.toPx(); typeface = android.graphics.Typeface.DEFAULT_BOLD
+            }
+            var v = kotlin.math.ceil(scaleLo / step) * step
+            var lastY = Float.MAX_VALUE
+            val minGap = 18.dp.toPx()
+            while (v <= scaleLo + scaleSpan) {
+                val y = padTop + h - ((v - scaleLo) / scaleSpan) * h
+                if (lastY - y >= minGap || lastY == Float.MAX_VALUE) {
+                    drawContext.canvas.nativeCanvas.drawText(if (isMmol) "%.0f".format(v) else "%.0f".format(v), 4.dp.toPx(), y + 4.dp.toPx(), paint)
+                    lastY = y
+                }
+                v += step
+            }
+        }
     }
+}
+
+private const val HERO_PLOT_BOTTOM_DP = 86
+
+private fun heroScale(points: List<GlucosePoint>, isMmol: Boolean): Pair<Float, Float> {
+    if (points.size < 2) return 0f to 1f
+    val minV = points.minOf { it.value }
+    val maxV = points.maxOf { it.value }
+    val span = (maxV - minV).coerceAtLeast(if (isMmol) 4f else 72f)
+    return (minV + maxV) / 2f - span / 2f to span
 }
 
 /** Цвет сахара по международным диапазонам (ATTD/ADA): зелёный в норме, выше — жёлтый→оранжевый→красный, ниже — красный→бордовый. */
