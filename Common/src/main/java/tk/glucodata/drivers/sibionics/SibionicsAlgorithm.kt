@@ -338,7 +338,12 @@ class SibionicsAlgorithmContext(
         val measurement = measurementMmol.takeIf { it.isFinite() && it > 0f } ?: stockMmol
         if (selection.model != SibionicsCustomAlgorithmModel.ADAPTIVE_V2) latestV2Estimate = null
         return when (selection.model) {
-            SibionicsCustomAlgorithmModel.STOCK -> nativeRound(measurement)
+            SibionicsCustomAlgorithmModel.STOCK ->
+                if (family == AlgorithmFamily.V116A) {
+                    nativeRound(smoothStockV116(measurement, index))
+                } else {
+                    nativeRound(measurement)
+                }
             SibionicsCustomAlgorithmModel.STATE_MODEL -> adaptiveCore.process(
                 stockMmol = measurement,
                 vendorStockMmol = stockMmol,
@@ -672,6 +677,38 @@ class SibionicsAlgorithmContext(
     private fun resetWrapperState() {
         liveDeltaMmol = Float.NaN
         replayDeltaMmol = Float.NaN
+        stockSmoothMmol = Float.NaN
+        stockSmoothIndex = -1
+    }
+
+    private var stockSmoothMmol = Float.NaN
+    private var stockSmoothIndex = -1
+
+    /**
+     * Light causal smoothing of the V1.1.6A vendor output (Sibionics 2, EU, Hematonix).
+     *
+     * The vendor deconvolution has high-frequency gain and republishes in stages, so the stock
+     * trace steps by 0.3-0.5 mmol/L up and down minute to minute while the sensor signal behind it
+     * is smooth. On recorded traces this EMA removes the zig-zag (94 -> 0 reversals) at about two
+     * minutes of lag. A move larger than [STOCK_SMOOTH_FAST_DELTA_MMOL] is a real excursion and is
+     * followed quickly, and a gap in the minute index restarts the filter.
+     */
+    private fun smoothStockV116(value: Float, index: Int): Float {
+        val previous = stockSmoothMmol
+        val gap = index - stockSmoothIndex
+        val smoothed = if (!previous.isFinite() || gap < 1 || gap > STOCK_SMOOTH_MAX_GAP) {
+            value
+        } else {
+            val alpha = if (abs(value - previous) > STOCK_SMOOTH_FAST_DELTA_MMOL) {
+                STOCK_SMOOTH_FAST_ALPHA
+            } else {
+                STOCK_SMOOTH_ALPHA
+            }
+            previous + alpha * (value - previous)
+        }
+        stockSmoothMmol = smoothed
+        stockSmoothIndex = index
+        return smoothed
     }
 
     private fun isUsableCandidate(candidate: Float): Boolean =
@@ -699,6 +736,10 @@ class SibionicsAlgorithmContext(
         private const val MIN_ALGORITHM_MMOL = 1f
         private const val MAX_VALID_MMOL = SibionicsConstants.MAX_ALGORITHM_GLUCOSE_MMOL
         private const val MAX_DELTA_MMOL = 40f
+        private const val STOCK_SMOOTH_ALPHA = 0.33f
+        private const val STOCK_SMOOTH_FAST_ALPHA = 0.7f
+        private const val STOCK_SMOOTH_FAST_DELTA_MMOL = 1.0f
+        private const val STOCK_SMOOTH_MAX_GAP = 3
     }
 
     private enum class AlgorithmFamily(val snapshotId: Int) {
