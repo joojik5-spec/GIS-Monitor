@@ -25,14 +25,24 @@ jobs:
         env:
           KS: ${{ secrets.GIS_KEYSTORE_B64 }}
           KPW: ${{ secrets.GIS_KEY_PASSWORD }}
+          SKS: ${{ secrets.SOLMI_KEYSTORE_B64 }}
+          SPW: ${{ secrets.SOLMI_KEYSTORE_PASSWORD }}
+          SAL: ${{ secrets.SOLMI_KEY_ALIAS }}
+          SKP: ${{ secrets.SOLMI_KEY_PASSWORD }}
         run: |
-          if [ -n "$KS" ]; then
+          if [ "$GITHUB_REF" = "refs/heads/solmi-sensor" ]; then
+            if [ -n "$SKS" ]; then
+              printf '%s' "$SKS" | base64 -d > "$RUNNER_TEMP/solmi.jks"
+              echo "SIGN=-Pthekeyfile=$RUNNER_TEMP/solmi.jks -Pthepassword=$SPW -Pthekeyalias=$SAL -Pthekeypassword=$SKP" >> $GITHUB_ENV
+            else echo "::warning::нет секрета SOLMI_KEYSTORE_B64"; fi
+          elif [ -n "$KS" ]; then
             echo "$KS" | base64 -d > "$RUNNER_TEMP/gis.keystore"
             echo "SIGN=-Pthekeyfile=$RUNNER_TEMP/gis.keystore -Pthepassword=$KPW -Pthekeyalias=gismonitor -Pthekeypassword=$KPW" >> $GITHUB_ENV
             echo "RELEASE=1" >> $GITHUB_ENV
           fi
       - name: Build
         run: ./gradlew --no-daemon -PgisBuild=${{ github.run_number }} $SIGN assembleMobileRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
+          for f in $(find . -path "*/build/outputs/apk/*" -name "*.apk"); do $(ls $ANDROID_SDK_ROOT/build-tools/*/apksigner | tail -1) verify --print-certs "$f" | grep -i "SHA-256" || true; done
         shell: bash
       - name: Why failed
         if: failure()
