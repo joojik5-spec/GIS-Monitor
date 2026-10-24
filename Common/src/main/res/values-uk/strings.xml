@@ -1,7 +1,7 @@
 <resources>
     <string name="language">uk</string>
     <string name="languagename">Мова</string>
-    <string name="app_name">Солми Сенсор</string>
+    <string name="app_name">Solmi Sensor</string>
 
     <string name="ok">OK</string>
     <string name="cancel">Скасувати</string>
@@ -15,7 +15,7 @@
     <string name="kerfstok_missing_message">Kerfstok не встановлено на годинник. Ви можете придбати його в магазині Garmin</string>
 
     <string name="alarm_description">Занадто низький або занадто високий рівень глюкози</string>
-    <string name="loss_description">Солми Сенсор втратив контакт із датчиком</string>
+    <string name="loss_description">Solmi Sensor втратив контакт із датчиком</string>
     <string name="numalarm_description">Нагадування про дозу, їжу або фізичні вправи</string>
     <string name="notification_description">Повідомляє поточне значення глюкози</string>
     <string name="ongoing_description">Постійна програма</string>
@@ -214,7 +214,7 @@
  <string name="heartrate">Пульс</string>
  <string name="xdripbroadcast">Tрансляція в AAPS</string>
  <string name="sensorpermission">Для відображення пульсу потрібен дозвіл датчиків</string>
- <string name="sensorpermissionmessage">Налаштуйте це в Налаштуваннях пристрою, Програмах, Дозволах, Солми Сенсор</string>
+ <string name="sensorpermissionmessage">Налаштуйте це в Налаштуваннях пристрою, Програмах, Дозволах, Solmi Sensor</string>
  <string name="floatglucose">Плав. глюкоза</string>
  <string name="floatglucoseshort">Плавати</string>
 
@@ -290,7 +290,7 @@
 <string name="system_ui">System UI</string>
 <string name="sensor">Датчик</string>
 <string name="settings">Налашт.</string>
-<string name="aboutname">Аб Солми Сенсор</string>
+<string name="aboutname">Аб Solmi Sensor</string>
 <string name="export">Експорт</string>
 <string name="mirror">Клон</string>
 <string name="new_amount">Нова сума</string>
@@ -330,7 +330,7 @@
  <string name="resendwarning">Усі дані буде надіслано знову, що потребує часу та може мати наслідки для Libreview і Kerfstok</string>
  <string name="parseip">Помилка аналізу IP</string>
  <string name="toomanyhosts">Перевищено максимальну кількість хостів</string>
- <string name="senthosts">Солми Сенсор надсилає максимум 6 хостам</string>
+ <string name="senthosts">Solmi Sensor надсилає максимум 6 хостам</string>
  <string name="clampnow">Тепер затискаємо</string>
  <string name="sendfrom">"Надіслати з: "</string>
  <string name="changestartbutton">Початок зміни</string>
@@ -428,7 +428,7 @@
 
     <!-- Newly Extracted Strings -->
     <string name="import_history">Імпортувати історію</string>
-    <string name="import_history_desc">Імпортувати дані глюкози з експорту Солми Сенсор або CSV-файлу</string>
+    <string name="import_history_desc">Імпортувати дані глюкози з експорту Solmi Sensor або CSV-файлу</string>
     <string name="get_started_desc">Почніть з додавання вашого сенсора</string>
     <string name="select_sensor">Виберіть тип сенсора</string>
     <string name="select_sibionics_type">Виберіть сенсор Sibionics</string>
@@ -475,9 +475,9 @@
     <string name="export_history_title">Експорт Історії</string>
     <string name="export_history_sub">Зберегти показання в CSV або текст</string>
     <string name="import_history_title">Імпорт Історії</string>
-    <string name="import_history_sub">Відновити показання глюкози з експорту Солми Сенсор або CSV-файлу</string>
+    <string name="import_history_sub">Відновити показання глюкози з експорту Solmi Sensor або CSV-файлу</string>
     <string name="import_no_glucose">У цьому файлі немає даних глюкози</string>
-    <string name="import_unsupported_file">Непідтримуваний файл. Виберіть експорт Солми Сенсор або CSV-файл історії глюкози.</string>
+    <string name="import_unsupported_file">Непідтримуваний файл. Виберіть експорт Solmi Sensor або CSV-файл історії глюкози.</string>
     <string name="clear_history_title">Очистити Історію?</string>
     <string name="clear_history_confirmation">Це видалить усі показання глюкози з бази даних. Ця дія незворотна.</string>
     <string name="delete_reading_title">Видалити показання?</string>
@@ -574,7 +574,7 @@
     <string name="scheduled_backup_acknowledge">Підтвердити й використовувати останню копію як базову</string>
     <string name="backup_integrity_channel">Попередження про цілісність копій</string>
     <string name="backup_integrity_channel_desc">Критичні попередження, якщо автоматична копія може містити значно менше даних</string>
-    <string name="backup_integrity_notification_title">Перевірте резервну копію Солми Сенсор</string>
+    <string name="backup_integrity_notification_title">Перевірте резервну копію Solmi Sensor</string>
     <string name="backup_integrity_notification_text">Остання копія неочікувано зменшилася. Старіші копії збережено. Відкрийте налаштування резервного копіювання для перевірки.</string>
     <string name="export_everything">Усе</string>
     <string name="export_history_data_desc">Історія глюкози, записи журналу та профілі інсуліну</string>
@@ -590,7 +590,7 @@
     <string name="import_data">Імпорт Історії</string>
     <string name="import_data_desc">Завантажити бекап або файл Libreview</string>
     <string name="import_data_settings">Імпорт даних/налаштувань</string>
-    <string name="import_data_settings_desc">Відновити CSV історії або експорт Солми Сенсор</string>
+    <string name="import_data_settings_desc">Відновити CSV історії або експорт Solmi Sensor</string>
     <string name="settings_import_confirm_title">Імпортувати налаштування?</string>
     <string name="settings_import_confirm_message">Це замінить налаштування програми, облікові дані, ключі пристроїв і конфігурацію mirror, а потім перезапустить програму.</string>
     <string name="settings_import_successful">Налаштування імпортовано. Перезапуск…</string>
@@ -633,7 +633,7 @@
     <string name="sibionics_sensor_sensitivity">Значення датчика: %1$s</string>
     <string name="sibionics_use_sensor_sensitivity">Використовувати значення датчика</string>
     <string name="sibionics_restart_algorithm_desc">Відновити хвилинний стан алгоритму зі збереженої історії датчика</string>
-    <string name="juggluco_native">Рідний Солми Сенсор</string>
+    <string name="juggluco_native">Рідний Solmi Sensor</string>
     <string name="window_label">вікно</string>
     <string name="auto_restart_algorithm">Перезапуск алгоритму</string>
     <string name="status_bluetooth_off">Bluetooth вимк.</string>
@@ -837,9 +837,9 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="libre_setup_libreview_note_title">Libre 3 + LibreView</string>
     <string name="libre_setup_advanced_options_desc">Налаштуйте експериментальну поведінку сканування Libre 3 перед сполученням.</string>
     <string name="libre3_nfc_command_title">Команда NFC для Libre 3</string>
-    <string name="libre3_nfc_command_desc">Оберіть, яку команду Солми Сенсор надсилає під час NFC-сканування Libre 3</string>
+    <string name="libre3_nfc_command_desc">Оберіть, яку команду Solmi Sensor надсилає під час NFC-сканування Libre 3</string>
     <string name="libre3_nfc_command_auto">Авто</string>
-    <string name="libre3_nfc_command_auto_desc">Використовувати стандартну поведінку Солми Сенсор для сканування Libre 3</string>
+    <string name="libre3_nfc_command_auto_desc">Використовувати стандартну поведінку Solmi Sensor для сканування Libre 3</string>
     <string name="libre3_nfc_command_activate">A0 Активувати</string>
     <string name="libre3_nfc_command_activate_desc">Примусово надсилати команду A0 Активувати під час сканування</string>
     <string name="libre3_nfc_command_switch_receiver">A8 Перемкнути приймач</string>
@@ -1184,7 +1184,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="IOBhelp">Довідка IOB</string>
     <string name="NightPost">Нічний пост</string>
     <string name="Nightscouthelp">Допомога нічного розвідника</string>
-    <string name="about">Аб Солми Сенсор</string>
+    <string name="about">Аб Solmi Sensor</string>
     <string name="active_positions_randomized">Активні позиції (рандомізовані)</string>
     <string name="active_time_range">Діапазон активного часу</string>
     <string name="add_custom_sound">Додайте спеціальний звук</string>
@@ -1415,7 +1415,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_iqr_short">IQR</string>
     <string name="report_not_enough_daily_trend">Недостатньо щоденних даних для відображення тенденції.</string>
     <string name="report_no_readings_day">Немає читань на цей день.</string>
-    <string name="report_page1_title">Клінічний звіт Солми Сенсор CGM</string>
+    <string name="report_page1_title">Клінічний звіт Solmi Sensor CGM</string>
     <string name="report_page1_subtitle">Діапазон %1$s · Показання %2$d · Вікно від %3$s до %4$s</string>
     <string name="report_estimated_a1c">Розрахунковий A1C</string>
     <string name="report_below_target">Нижче цілі</string>
@@ -1430,7 +1430,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_above_duration">Вгорі: %1$s</string>
     <string name="report_agp_section_title">Амбулаторний профіль глюкози (24-годинний процентиль)</string>
     <string name="report_reference_targets">Контрольні цілі: GMI &lt; 7,0%%, CV &lt;= 36%%, Час у діапазоні &gt;= 70%%.</string>
-    <string name="report_page2_title">Щоденні тенденції та інтерпретація Солми Сенсор CGM</string>
+    <string name="report_page2_title">Щоденні тенденції та інтерпретація Solmi Sensor CGM</string>
     <string name="report_page2_subtitle">Щоденна мінливість, розподіл показників та примітки до інтерпретації</string>
     <string name="report_daily_average_trend">Середньоденний тренд</string>
     <string name="report_detailed_metrics">Детальні показники</string>
@@ -1445,7 +1445,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_no_generated_insights_message">Для цього періоду часу не було створено додаткових попереджень про шаблони.</string>
     <string name="report_agp_consensus_title">Посилання на консенсус AGP</string>
     <string name="report_agp_consensus_body">Цілі, згадані в цьому звіті, відповідають міжнародному узгодженому стилю AGP: TIR 70-180 мг/дл (3,9-10,0 ммоль/л), TBR &lt;70 і &lt;54 мг/дл, TAR &gt;180 і &gt;250 мг/дл, з цільовим CV &lt;=36%%.</string>
-    <string name="report_page3_title">Солми Сенсор Додаток I - AGP і щоденні таблиці</string>
+    <string name="report_page3_title">Solmi Sensor Додаток I - AGP і щоденні таблиці</string>
     <string name="report_page3_subtitle">Погодинні процентилі та результати на денному рівні</string>
     <string name="report_hourly_agp_table">Погодинна таблиця профілю AGP</string>
     <string name="report_hour">Година</string>
@@ -1454,7 +1454,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_no_hourly_agp">У цьому діапазоні немає погодинних контейнерів AGP.</string>
     <string name="report_daily_outcomes_table">Таблиця щоденних результатів</string>
     <string name="report_showing_latest_days">Показано останні %1$d з %2$d днів.</string>
-    <string name="report_page4_title">Солми Сенсор Додаток II - Події та щоденні профілі</string>
+    <string name="report_page4_title">Solmi Sensor Додаток II - Події та щоденні профілі</string>
     <string name="report_page4_subtitle">Показники гіпо/гіпер експозиції та діаграми профілів на денному рівні</string>
     <string name="report_hypo_hyper_events">Події гіпо/гіперопромінення</string>
     <string name="report_hours_per_day">Годин/день</string>
@@ -1484,7 +1484,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="wear_transport_gms_unavailable">Google Play Services unavailable; Wear transport is disabled.</string>
     <string name="wear_transport_reinit_desc">Force a fresh watch discovery and network sync cycle.</string>
     <string name="wear_watch_app_missing">Додаток для годинника відсутній</string>
-    <string name="wear_watch_app_missing_hint">Установіть Солми Сенсор на цей годинник, потім натисніть оновити.</string>
+    <string name="wear_watch_app_missing_hint">Установіть Solmi Sensor на цей годинник, потім натисніть оновити.</string>
     <string name="wear_auto_sensor_switch">Автоматично перемикати датчик</string>
     <string name="wear_auto_sensor_switch_on_desc">Телефон і годинник самі передають датчик один одному, тож його зчитує той пристрій, що в зоні дії.</string>
     <string name="wear_auto_sensor_switch_off_desc">Датчик зчитує лише вибраний вами пристрій.</string>
@@ -1612,7 +1612,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="scanner_label">Сканер</string>
     <string name="setup_complete">Налаштування завершено</string>
     <string name="shortoff">Вимк</string>
-    <string name="startjuggluco">Солми Сенсор запущено на телефоні?\n\nWIFI та Bluetooth увімкнено?</string>
+    <string name="startjuggluco">Solmi Sensor запущено на телефоні?\n\nWIFI та Bluetooth увімкнено?</string>
     <string name="status_raw_values_received">Підключено, отримано необроблені значення</string>
     <string name="status_waiting_for_data">Підключено, очікування даних…</string>
     <string name="status_invalid_glucose_from_sensor">Некоректна глюкоза від сенсора</string>
@@ -1621,7 +1621,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="veryhighglucoseshort">" Дуже ВИСОКИЙ!"</string>
     <string name="verylowglucoseshort">" Дуже НИЗЬКИЙ!"</string>
     <string name="mq_fetch_calibration_on_add">Відновити сесію виробника під час додавання</string>
-    <string name="mq_fetch_calibration_on_add_desc">Якщо доступний QR-код або збережені облікові дані Glutec, Солми Сенсор спробує відновити стан сесії MQ під час налаштування.</string>
+    <string name="mq_fetch_calibration_on_add_desc">Якщо доступний QR-код або збережені облікові дані Glutec, Solmi Sensor спробує відновити стан сесії MQ під час налаштування.</string>
     <string name="mq_bootstrap_button">Відновити сесію виробника</string>
     <string name="mq_bootstrap_dialog_title">Відновити сесію виробника</string>
     <string name="mq_bootstrap_dialog_desc">Відновіть стан сесії виробника через Glutec. За потреби введіть тут QR-код датчика; акаунт, синхронізація й API налаштовуються в акаунті MQ / Glutec.</string>
@@ -1654,9 +1654,9 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="mq_account_session_valid">Сесія дійсна</string>
     <string name="mq_account_session_invalid">Сесія недійсна</string>
     <string name="mq_manual_calibration_title">Ручне калібрування</string>
-    <string name="mq_manual_calibration_desc">Локально в Солми Сенсор. Введіть значення глюкози з пальця у %1$s. Потрібен свіжий живий пакет MQ.</string>
+    <string name="mq_manual_calibration_desc">Локально в Solmi Sensor. Введіть значення глюкози з пальця у %1$s. Потрібен свіжий живий пакет MQ.</string>
     <string name="mq_follower_title">Стеження Glutec</string>
-    <string name="mq_follower_desc">Стежте за іншим акаунтом Glutec через хмару виробника. Після ввімкнення Солми Сенсор створить датчик-спостерігач лише для читання.</string>
+    <string name="mq_follower_desc">Стежте за іншим акаунтом Glutec через хмару виробника. Після ввімкнення Solmi Sensor створить датчик-спостерігач лише для читання.</string>
     <string name="mq_follower_account_label">Акаунт для стеження</string>
     <string name="mq_follower_account_desc">Введіть номер телефону або акаунт Glutec, за яким треба стежити.</string>
     <string name="mq_follower_enabled_summary">Стеження ввімкнено</string>
@@ -1958,9 +1958,9 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="mirror_host_error_database_busy">База даних зайнята, спробуйте ще раз</string>
     <string name="mirror_host_error_ice_label_short">Мітка ICE має містити щонайменше 16 символів</string>
     <string name="mirror_invalid_qr_code">Неправильний QR-код</string>
-    <string name="mirror_scan_prompt">Скануйте QR дзеркала Солми Сенсор</string>
+    <string name="mirror_scan_prompt">Скануйте QR дзеркала Solmi Sensor</string>
     <string name="mirror_connect_device_title">Підключитися до цього пристрою?</string>
-    <string name="mirror_connect_qr_message">Відскановано QR-код дзеркала Солми Сенсор. Це синхронізуватиме дані глюкози з віддаленим пристроєм.</string>
+    <string name="mirror_connect_qr_message">Відскановано QR-код дзеркала Solmi Sensor. Це синхронізуватиме дані глюкози з віддаленим пристроєм.</string>
     <string name="mirror_connect_qr_turn_message">Цей гібридний QR також замінить гібридну конфігурацію на цьому пристрої.</string>
     <string name="mirror_connect_action">Підключити</string>
     <string name="mirror_connect_nearby_title">Підключитися до %1$s?</string>
@@ -2554,20 +2554,20 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sensor_handover_multiple_text">Сенсор завершився, але активні кілька сенсорів-наступників. Автоматичну передачу пропущено; перемкніться вручну.</string>
     <string name="sensor_handover_successor_ready">Сенсор-наступник готовий; автоматична передача спрацює після завершення</string>
     <string name="nightscout_upload_iob">Надсилати активний інсулін</string>
-    <string name="nightscout_upload_iob_desc">Використовувати IOB Солми Сенсор замість Nightscout</string>
+    <string name="nightscout_upload_iob_desc">Використовувати IOB Solmi Sensor замість Nightscout</string>
     <string name="journal_iob_source_remote">Значення з пристрою, що надсилає дані (Nightscout)</string>
     <string name="ottai_cloud_already_binding">До облікового запису Ottai досі прив’язаний інший сенсор. Відкрийте «Датчики акаунта Ottai» та відв’яжіть його, а потім повторіть спробу.</string>
-    <string name="ottai_cloud_unbind_hint">Дія лише з хмарним обліковим записом. Солми Сенсор не підключатиметься до вибраного сенсора, не зупинятиме, не видалятиме й не змінюватиме його.</string>
+    <string name="ottai_cloud_unbind_hint">Дія лише з хмарним обліковим записом. Solmi Sensor не підключатиметься до вибраного сенсора, не зупинятиме, не видалятиме й не змінюватиме його.</string>
     <string name="ottai_cloud_unbind_title">Назавжди відв’язати цей сенсор?</string>
-    <string name="ottai_cloud_unbind_message">%1$s буде назавжди видалено з цього облікового запису Ottai. Обліковий запис більше не зможе отримати його облікові дані, а сенсор більше не працюватиме в офіційному застосунку Ottai. Збережені в Солми Сенсор облікові дані та стан сенсора не зміняться. Цю дію неможливо скасувати.</string>
+    <string name="ottai_cloud_unbind_message">%1$s буде назавжди видалено з цього облікового запису Ottai. Обліковий запис більше не зможе отримати його облікові дані, а сенсор більше не працюватиме в офіційному застосунку Ottai. Збережені в Solmi Sensor облікові дані та стан сенсора не зміняться. Цю дію неможливо скасувати.</string>
     <string name="ottai_cloud_unbind_confirm">Відв’язати назавжди</string>
-    <string name="ottai_cloud_unbind_success">Сенсор назавжди відв’язано від Ottai. Сенсор і збережені дані в Солми Сенсор не змінено.</string>
+    <string name="ottai_cloud_unbind_success">Сенсор назавжди відв’язано від Ottai. Сенсор і збережені дані в Solmi Sensor не змінено.</string>
     <string name="ottai_cloud_unbind_failed">Не вдалося відв’язати сенсор від Ottai.</string>
     <string name="ottai_disconnect_forget_unbind">Видалити облікові дані й відв’язати</string>
     <string name="ottai_disconnect_forget_unbind_desc">Видаляє збережені ключі й відв’язує сенсор від облікового запису Ottai. Підключити його знову не вдасться.</string>
     <string name="ottai_disconnect_unbind_failed">Облікові дані видалено, але сенсор досі прив’язаний до облікового запису Ottai. Відв’яжіть його в налаштуванні Ottai.</string>
     <string name="ottai_unused_binding_title">Сенсор досі прив’язаний до цього облікового запису</string>
-    <string name="ottai_unused_binding_desc">%1$s прив’язаний до цього облікового запису Ottai, але не підключений у Солми Сенсор. Якщо він завершився, відв’яжіть його, щоб обліковий запис міг активувати новий сенсор.</string>
+    <string name="ottai_unused_binding_desc">%1$s прив’язаний до цього облікового запису Ottai, але не підключений у Solmi Sensor. Якщо він завершився, відв’яжіть його, щоб обліковий запис міг активувати новий сенсор.</string>
     <string name="ottai_cloud_binding_checking">Перевірка прив’язки в хмарі Ottai…</string>
     <string name="ottai_cloud_binding_bound">Стан хмари: прив’язано до цього облікового запису Ottai</string>
     <string name="ottai_cloud_binding_not_bound">Стан хмари: не прив’язано до цього облікового запису Ottai</string>
@@ -2629,7 +2629,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sms_max_per_hour">Максимум повідомлень на годину</string>
     <string name="sms_max_per_day">Максимум повідомлень на добу</string>
     <string name="sms_sent_today">Надіслано за останні 24 години: %1$d</string>
-    <string name="sms_permission_desc">Щоб цей напрямок працював, Солми Сенсор потрібен дозвіл на надсилання SMS.</string>
+    <string name="sms_permission_desc">Щоб цей напрямок працював, Solmi Sensor потрібен дозвіл на надсилання SMS.</string>
     <string name="sms_permission_grant">Дозволити</string>
     <string name="sms_no_telephony">Цей пристрій не може надсилати SMS.</string>
     <string name="sms_preview_title">Попередній перегляд</string>
@@ -2647,7 +2647,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sms_event_no_data">Немає даних сенсора %1$d хв</string>
     <string name="sms_event_all_clear">Відбій</string>
     <string name="sms_event_relay">Оновлення (немає передачі даних)</string>
-    <string name="sms_event_test">Тестове повідомлення від Солми Сенсор</string>
+    <string name="sms_event_test">Тестове повідомлення від Solmi Sensor</string>
     <string name="sms_body_no_reading">Показників ще немає</string>
 
     <!-- In-app updates (GitHub releases) -->
@@ -2687,13 +2687,13 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="app_updates_verifying_title">Перевірка завантаження</string>
     <string name="app_updates_verifying_body">Перевіряємо підпис і версію перед встановленням.</string>
     <string name="app_updates_ready_title">%1$s готова до встановлення</string>
-    <string name="app_updates_ready_body">Android попросить підтвердження. Солми Сенсор закриється й відкриється знову; з’єднання з сенсорами відновиться саме.</string>
+    <string name="app_updates_ready_body">Android попросить підтвердження. Solmi Sensor закриється й відкриється знову; з’єднання з сенсорами відновиться саме.</string>
     <string name="app_updates_up_to_date_title">У вас остання версія</string>
     <string name="app_updates_last_checked">Остання перевірка: %1$s</string>
     <string name="app_updates_never_checked">ніколи</string>
     <string name="app_updates_error_title">Не вдалося перевірити оновлення</string>
-    <string name="app_updates_permission_title">Дозвольте встановлення з Солми Сенсор</string>
-    <string name="app_updates_permission_body">Android потребує одноразового дозволу, щоб Солми Сенсор міг встановити власне оновлення.</string>
+    <string name="app_updates_permission_title">Дозвольте встановлення з Solmi Sensor</string>
+    <string name="app_updates_permission_body">Android потребує одноразового дозволу, щоб Solmi Sensor міг встановити власне оновлення.</string>
     <string name="app_updates_permission_action">Відкрити налаштування</string>
     <string name="app_updates_unsupported_store_title">Оновлення надходять із магазину</string>
     <string name="app_updates_unsupported_store_body">Цю копію встановлено через %1$s, який сам керує оновленнями.</string>
@@ -2704,11 +2704,11 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="app_updates_error_parse">Джерело оновлень повернуло неочікувану відповідь.</string>
     <string name="app_updates_error_no_artifact">В останньому випуску немає файлу для цієї збірки.</string>
     <string name="app_updates_error_checksum">Завантажений файл не збігся з контрольною сумою та був видалений.</string>
-    <string name="app_updates_error_signature">Завантажений APK підписано іншим ключем, тому його видалено. Встановлюйте Солми Сенсор лише з офіційної сторінки випусків.</string>
+    <string name="app_updates_error_signature">Завантажений APK підписано іншим ключем, тому його видалено. Встановлюйте Solmi Sensor лише з офіційної сторінки випусків.</string>
     <string name="app_updates_error_package">Завантажений APK належить іншому застосунку.</string>
     <string name="app_updates_error_downgrade">Цей випуск не новіший за встановлену версію.</string>
     <string name="app_updates_error_storage">Недостатньо вільного місця для завантаження.</string>
-    <string name="app_updates_error_install_permission">Солми Сенсор ще не має дозволу встановлювати застосунки.</string>
+    <string name="app_updates_error_install_permission">Solmi Sensor ще не має дозволу встановлювати застосунки.</string>
     <string name="app_updates_error_install_failed">Встановлення не завершено.</string>
     <string name="app_updates_error_cancelled">Встановлення скасовано.</string>
     <string name="app_updates_source_title">Джерело оновлень</string>
@@ -2995,7 +2995,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="wearos_config_title">Налаштування Wear OS</string>
     <string name="watch_status_section">Стан годинника</string>
     <string name="watch_none_found">Годинників Wear OS не знайдено</string>
-    <string name="watch_none_found_hint">Відкрийте Солми Сенсор на годиннику, потім натисніть «Оновити»</string>
+    <string name="watch_none_found_hint">Відкрийте Solmi Sensor на годиннику, потім натисніть «Оновити»</string>
     <string name="watch_routing_section">Маршрутизація</string>
     <string name="watch_enter_amounts">Вводити кількості на годиннику</string>
     <string name="watch_enter_amounts_on">Записи з годинника зберігаються й синхронізуються з телефоном.</string>
@@ -3140,7 +3140,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="cal_step4">Одразу введіть число в калібруваннях. Старий замір уже не підходить.</string>
     <string name="cal_dont">Не калібруйте при різких стрибках, якщо цукор швидко змінюється або якщо сумніваєтеся в замірі.</string>
     <string name="cal_from_gis_title">Калібрування із застосунку GIS</string>
-    <string name="cal_from_gis_text">Замір можна ввести і в застосунку GIS: він надійде сюди й враховуватиметься так само, як уведений у Солми Сенсор, а в AAPS і Nightscout піде вже відкаліброване значення. Для цього ввімкніть приймання нижче. За замовчуванням воно вимкнене, щоб сторонні застосунки не могли змінювати ваше калібрування.</string>
+    <string name="cal_from_gis_text">Замір можна ввести і в застосунку GIS: він надійде сюди й враховуватиметься так само, як уведений у Solmi Sensor, а в AAPS і Nightscout піде вже відкаліброване значення. Для цього ввімкніть приймання нижче. За замовчуванням воно вимкнене, щоб сторонні застосунки не могли змінювати ваше калібрування.</string>
     <string name="cal_accept_gis">Приймати калібрування з GIS</string>
     <string name="cal_open">Відкрити калібрування</string>
     <string name="cal_ocr_fail">Число не розпізнано. Введіть його вручну.</string>

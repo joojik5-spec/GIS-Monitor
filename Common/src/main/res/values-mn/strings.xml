@@ -1,7 +1,7 @@
 <resources>
     <string name="language">mn</string>
     <string name="languagename">Монгол хэл</string>
-    <string name="app_name">Солми Сенсор</string>
+    <string name="app_name">Solmi Sensor</string>
     <string name="ok">OK</string>
     <string name="cancel">Цуцлах</string>
     <string name="garmin_initialization_error">"Garmin Connect SDK эхлүүлэхэд алдаа гарлаа: "</string>

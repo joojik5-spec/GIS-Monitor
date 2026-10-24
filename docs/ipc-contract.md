@@ -1,9 +1,9 @@
-# Контракт IPC v1: Солми Сенсор → Солми
+# Контракт IPC v1: Solmi Sensor → Solmi
 
 Приложение-датчик: `ru.solmi.sensor`. Основное приложение: `ru.solmi.app`.
 
 ## Разрешение
-`ru.solmi.permission.SENSOR_DATA`, `protectionLevel="signature"`. Объявлено в Солми Сенсор.
+`ru.solmi.permission.SENSOR_DATA`, `protectionLevel="signature"`. Объявлено в Solmi Sensor.
 Основное приложение добавляет в манифест:
 
 ```xml

@@ -116,9 +116,9 @@ GPL-3.0 (see [LICENSE.txt](LICENSE.txt)). Forked from [Juggluco](https://github.
 
 **Disclaimer:** This software is provided **"as is"**, without warranty of any kind, to the fullest extent permitted by applicable law. JugglucoNG is experimental software and is **not a medical device**. The authors and contributors make no guarantees regarding its accuracy, reliability, availability, or fitness for any particular purpose. Always verify clinically significant readings using the manufacturer's official system or another appropriate method before making treatment decisions.
 
-## Солми Сенсор
+## Solmi Sensor
 
-«Солми Сенсор» (`ru.solmi.sensor`) — приложение для чтения датчиков глюкозы. Основано на
+Solmi Sensor (`ru.solmi.sensor`) — приложение для чтения датчиков глюкозы. Основано на
 [Juggluco](https://github.com/j-kaltes/Juggluco) (© Jaap Korthals Altes) и JugglucoNG,
 распространяется по лицензии GNU GPL v3 (см. `LICENSE.txt`). Уведомления об авторских правах
 в исходных файлах сохранены.

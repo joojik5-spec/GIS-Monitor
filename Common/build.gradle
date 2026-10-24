@@ -95,7 +95,7 @@ android {
         // be compared against a release tag. The in-app updater needs the bare number.
         buildConfigField 'String', 'BASE_VERSION_NAME', "\"$appVersionName\""
         // GitHub repo the in-app updater reads releases from. Forks change it here.
-        // Канал обновлений Солми Сенсор (заглушка: репозиторий ещё не создан).
+        // Канал обновлений Solmi Sensor (заглушка: репозиторий ещё не создан).
         buildConfigField 'String', 'UPDATE_CHANNEL', '"solmi-sensor-updates"'
         buildConfigField 'String', 'UPDATE_REPO', '"joojik5-spec/solmi-sensor-updates"'
 
@@ -184,7 +184,7 @@ android {
         releasedub {
             versionNameSuffix = 'DUB'
             applicationIdSuffix = ".dub"
-            resValue "string", "app_name", "Солми Сенсор Dub"
+            resValue "string", "app_name", "Solmi Sensor Dub"
             signingConfig = signingConfigs.alg
             minifyEnabled = true
             shrinkResources = true
@@ -203,7 +203,7 @@ android {
         releasedub2 {
             versionNameSuffix = 'DUB2'
             applicationIdSuffix = ".dub2"
-            resValue "string", "app_name", "Солми Сенсор Dub 2"
+            resValue "string", "app_name", "Solmi Sensor Dub 2"
             signingConfig = signingConfigs.alg
             minifyEnabled = true
             shrinkResources = true
