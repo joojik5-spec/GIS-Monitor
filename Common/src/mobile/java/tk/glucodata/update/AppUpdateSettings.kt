@@ -68,7 +68,7 @@ object AppUpdateSettings {
     @Suppress("UNUSED_PARAMETER")
     fun updateSource(context: Context): String = defaultUpdateSource
 
-    val defaultUpdateSource: String get() = "https://github.com/${BuildConfig.UPDATE_REPO}"
+    val defaultUpdateSource: String get() = BuildConfig.UPDATE_URL
 
     fun isDefaultUpdateSource(context: Context): Boolean =
         updateSource(context) == defaultUpdateSource
