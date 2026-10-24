@@ -3,7 +3,7 @@
     <string name="language">pt</string>
 
     <string name="languagename">Linguagem</string>
-<string name="app_name">GIS Monitor</string>
+<string name="app_name">Солми Сенсор</string>
 
 <string name="ok">OK</string>
 <string name="cancel">Cancelar</string>
@@ -17,7 +17,7 @@
 <string name="kerfstok_missing_message">Kerfstok não está instalado no relógio. Pode obtê-lo na loja Garmin connectiq</string>
 
 <string name="alarm_description">Glicose muito baixa ou muito alta</string>
-<string name="loss_description">GIS Monitor perdeu contato com o sensor</string>
+<string name="loss_description">Solmi Sensor perdeu contato com o sensor</string>
 <string name="numalarm_description">Lembrete para tomar, comer ou fazer exercícios</string>
 <string name="notification_description">Notifica o valor atual da glicose</string>
 <string name="ongoing_description">Programa em andamento</string>
@@ -316,7 +316,7 @@
 
     <!-- Newly Extracted Strings -->
     <string name="import_history">Importar Histórico</string>
-    <string name="import_history_desc">Importar dados de glicose de uma exportação do GIS Monitor ou arquivo CSV</string>
+    <string name="import_history_desc">Importar dados de glicose de uma exportação do Solmi Sensor ou arquivo CSV</string>
     <string name="get_started_desc">Comece adicionando seu sensor</string>
     <string name="select_sensor">Selecionar Tipo de Sensor</string>
     <string name="select_sibionics_type">Escolha um sensor Sibionics</string>
@@ -363,9 +363,9 @@
     <string name="export_history_title">Exportar Histórico</string>
     <string name="export_history_sub">Salvar leituras em arquivo CSV ou texto</string>
     <string name="import_history_title">Importar Histórico</string>
-    <string name="import_history_sub">Restaurar leituras de glicose de uma exportação do GIS Monitor ou arquivo CSV</string>
+    <string name="import_history_sub">Restaurar leituras de glicose de uma exportação do Solmi Sensor ou arquivo CSV</string>
     <string name="import_no_glucose">Este arquivo não contém dados de glicose</string>
-    <string name="import_unsupported_file">Arquivo não compatível. Selecione uma exportação do GIS Monitor ou um CSV de histórico de glicose.</string>
+    <string name="import_unsupported_file">Arquivo não compatível. Selecione uma exportação do Solmi Sensor ou um CSV de histórico de glicose.</string>
     <string name="clear_history_title">Limpar Histórico?</string>
     <string name="clear_history_confirmation">Isso removerá todas as leituras de glicose do banco de dados. Esta ação não pode ser desfeita.</string>
     <string name="delete_reading_title">Excluir leitura?</string>
@@ -462,7 +462,7 @@
     <string name="scheduled_backup_acknowledge">Confirmar e usar a cópia mais recente como referência</string>
     <string name="backup_integrity_channel">Avisos de integridade das cópias</string>
     <string name="backup_integrity_channel_desc">Avisos críticos quando uma cópia automática pode conter muito menos dados</string>
-    <string name="backup_integrity_notification_title">Verifique a cópia de segurança do GIS Monitor</string>
+    <string name="backup_integrity_notification_title">Verifique a cópia de segurança do Solmi Sensor</string>
     <string name="backup_integrity_notification_text">A cópia mais recente é inesperadamente menor. As cópias anteriores foram mantidas. Abra as definições das cópias para a verificar.</string>
     <string name="export_everything">Tudo</string>
     <string name="export_history_data_desc">Histórico de glicose, entradas do diário e predefinições de insulina</string>
@@ -478,7 +478,7 @@
     <string name="import_data">Importar Histórico</string>
     <string name="import_data_desc">Carregar backup ou arquivo Libreview</string>
     <string name="import_data_settings">Importar dados/configurações</string>
-    <string name="import_data_settings_desc">Restaurar CSV do histórico ou exportação do GIS Monitor</string>
+    <string name="import_data_settings_desc">Restaurar CSV do histórico ou exportação do Solmi Sensor</string>
     <string name="settings_import_confirm_title">Importar configurações?</string>
     <string name="settings_import_confirm_message">Isso substituirá configurações do app, credenciais, chaves do dispositivo e configuração de espelhamento, depois reiniciará o app.</string>
     <string name="settings_import_successful">Configurações importadas. Reiniciando…</string>
@@ -521,7 +521,7 @@
     <string name="sibionics_sensor_sensitivity">Valor do sensor: %1$s</string>
     <string name="sibionics_use_sensor_sensitivity">Usar valor do sensor</string>
     <string name="sibionics_restart_algorithm_desc">Reconstruir o estado minuto a minuto a partir do histórico guardado</string>
-    <string name="juggluco_native">Nativ. GIS Monitor</string>
+    <string name="juggluco_native">Nativ. Solmi Sensor</string>
     <string name="window_label">janela</string>
     <string name="auto_restart_algorithm">Reiniciar algoritmo</string>
     <string name="status_bluetooth_off">Bluetooth desl.</string>
@@ -592,7 +592,7 @@
     <string name="ICE">ICE</string>
     <string name="USE_ALARM">Alarm is alarm</string>
     <string name="aaps_broadcast">Glucodata broadcast</string>
-    <string name="about_text">GPL-3.0 • Fork of Juggluco</string>
+    <string name="about_text">GPL-3.0 license • based on Juggluco © Jaap Korthals Altes and JugglucoNG</string>
     <string name="accuchek_scan_instruction">Digitalize a matriz de dados no seu sensor Accu-Chek SmartGuide</string>
     <string name="accuchek_setup_title">Configuração Accu-Chek</string>
     <string name="active">Ativo</string>
@@ -760,9 +760,9 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="libre_setup_libreview_note_title">Libre 3 + LibreView</string>
     <string name="libre_setup_advanced_options_desc">Ajuste o comportamento experimental da leitura do Libre 3 antes do emparelhamento.</string>
     <string name="libre3_nfc_command_title">Comando NFC do Libre 3</string>
-    <string name="libre3_nfc_command_desc">Escolha qual comando o GIS Monitor envia durante a leitura NFC do Libre 3</string>
+    <string name="libre3_nfc_command_desc">Escolha qual comando o Solmi Sensor envia durante a leitura NFC do Libre 3</string>
     <string name="libre3_nfc_command_auto">Auto</string>
-    <string name="libre3_nfc_command_auto_desc">Use o comportamento padrão de leitura Libre 3 do GIS Monitor</string>
+    <string name="libre3_nfc_command_auto_desc">Use o comportamento padrão de leitura Libre 3 do Solmi Sensor</string>
     <string name="libre3_nfc_command_activate">A0 Ativar</string>
     <string name="libre3_nfc_command_activate_desc">Force o comando A0 Ativar durante a leitura</string>
     <string name="libre3_nfc_command_switch_receiver">A8 Trocar receptor</string>
@@ -903,7 +903,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sensornotstreamed">Nothing yet</string>
     <string name="sensors_title">Sensors</string>
     <string name="sensorstreamed"></string>
-    <string name="senthosts">GIS Monitor sends to maximal 6 hosts</string>
+    <string name="senthosts">Solmi Sensor sends to maximal 6 hosts</string>
     <string name="separate">Separate</string>
     <string name="sibionics2">Sibionics 2</string>
     <string name="gs3">Sibionics GS3</string>
@@ -1402,7 +1402,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_iqr_short">AIQ</string>
     <string name="report_not_enough_daily_trend">Não há dados diários suficientes para renderizar a tendência.</string>
     <string name="report_no_readings_day">Não há leituras para este dia.</string>
-    <string name="report_page1_title">Relatório clínico GIS Monitor CGM</string>
+    <string name="report_page1_title">Relatório clínico Solmi Sensor CGM</string>
     <string name="report_page1_subtitle">Intervalo %1$s · Leituras %2$d · Janela %3$s a %4$s</string>
     <string name="report_estimated_a1c">A1C estimado</string>
     <string name="report_below_target">Abaixo da meta</string>
@@ -1417,7 +1417,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_above_duration">Acima: %1$s</string>
     <string name="report_agp_section_title">Perfil glicêmico ambulatorial (faixas percentuais de 24h)</string>
     <string name="report_reference_targets">Metas de referência: GMI &lt; 7,0%%, CV &lt;= 36%%, Tempo dentro do intervalo &gt;= 70%%.</string>
-    <string name="report_page2_title">GIS Monitor CGM Tendências Diárias e Interpretação</string>
+    <string name="report_page2_title">Solmi Sensor CGM Tendências Diárias e Interpretação</string>
     <string name="report_page2_subtitle">Variabilidade diária, discriminação de métricas e notas de interpretação</string>
     <string name="report_daily_average_trend">Tendência média diária</string>
     <string name="report_detailed_metrics">Métricas detalhadas</string>
@@ -1432,7 +1432,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_no_generated_insights_message">Nenhum aviso de padrão adicional foi gerado para esse intervalo de tempo.</string>
     <string name="report_agp_consensus_title">Referência de consenso AGP</string>
     <string name="report_agp_consensus_body">As metas referenciadas neste relatório seguem o estilo de consenso internacional da AGP: TIR 70-180 mg/dL (3,9-10,0 mmol/L), TBR &lt;70 e &lt;54 mg/dL, TAR &gt;180 e &gt;250 mg/dL, com meta CV &lt;=36%%.</string>
-    <string name="report_page3_title">GIS Monitor Apêndice I - AGP e tabelas diárias</string>
+    <string name="report_page3_title">Solmi Sensor Apêndice I - AGP e tabelas diárias</string>
     <string name="report_page3_subtitle">Percentis horários e resultados diários</string>
     <string name="report_hourly_agp_table">Tabela de perfil AGP por hora</string>
     <string name="report_hour">Hora</string>
@@ -1441,7 +1441,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="report_no_hourly_agp">Não há compartimentos AGP horários disponíveis neste intervalo.</string>
     <string name="report_daily_outcomes_table">Tabela de resultados diários</string>
     <string name="report_showing_latest_days">Mostrando os últimos %1$d de %2$d dias.</string>
-    <string name="report_page4_title">GIS Monitor Apêndice II - Eventos e Perfis Diários</string>
+    <string name="report_page4_title">Solmi Sensor Apêndice II - Eventos e Perfis Diários</string>
     <string name="report_page4_subtitle">Métricas de hipo/hiperexposição e gráficos de perfil diário</string>
     <string name="report_hypo_hyper_events">Eventos de hipo/hiperexposição</string>
     <string name="report_hours_per_day">Horas/dia</string>
@@ -1471,7 +1471,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="wear_transport_gms_unavailable">Google Play Services unavailable; Wear transport is disabled.</string>
     <string name="wear_transport_reinit_desc">Force a fresh watch discovery and network sync cycle.</string>
     <string name="wear_watch_app_missing">Aplicação do relógio em falta</string>
-    <string name="wear_watch_app_missing_hint">Instale o GIS Monitor neste relógio e toque em atualizar.</string>
+    <string name="wear_watch_app_missing_hint">Instale o Solmi Sensor neste relógio e toque em atualizar.</string>
     <string name="wear_auto_sensor_switch">Mudar de sensor automaticamente</string>
     <string name="wear_auto_sensor_switch_on_desc">O telemóvel e o relógio passam o sensor entre si, para que o leia aquele que estiver ao alcance.</string>
     <string name="wear_auto_sensor_switch_off_desc">Só o dispositivo que escolher lê o sensor.</string>
@@ -1547,7 +1547,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="insight_unstable_days">Dias instaveis frequentes</string>
     <string name="insight_unstable_days_desc">Nesta janela, %1$d dias tiveram menos de 50%% do tempo no intervalo.</string>
     <string name="mq_fetch_calibration_on_add">Restaurar sessão do fornecedor ao adicionar</string>
-    <string name="mq_fetch_calibration_on_add_desc">Se houver um codigo QR ou credenciais Glutec guardadas disponiveis, o GIS Monitor tenta restaurar o estado da sessao MQ durante a configuracao.</string>
+    <string name="mq_fetch_calibration_on_add_desc">Se houver um codigo QR ou credenciais Glutec guardadas disponiveis, o Solmi Sensor tenta restaurar o estado da sessao MQ durante a configuracao.</string>
     <string name="mq_bootstrap_button">Restaurar sessao do fornecedor</string>
     <string name="mq_bootstrap_dialog_title">Restaurar sessao do fornecedor</string>
     <string name="mq_bootstrap_dialog_desc">Restaure o estado da sessao do fornecedor atraves do Glutec. Introduza aqui o QR do sensor se necessario; conta, sincronizacao e API ficam na Conta MQ / Glutec.</string>
@@ -1580,9 +1580,9 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="mq_account_session_valid">Sessao valida</string>
     <string name="mq_account_session_invalid">Sessao invalida</string>
     <string name="mq_manual_calibration_title">Calibração manual</string>
-    <string name="mq_manual_calibration_desc">Local ao GIS Monitor. Introduza um valor de glicose por picada no dedo em %1$s. Requer um pacote MQ recente.</string>
+    <string name="mq_manual_calibration_desc">Local ao Solmi Sensor. Introduza um valor de glicose por picada no dedo em %1$s. Requer um pacote MQ recente.</string>
     <string name="mq_follower_title">Seguidor Glutec</string>
-    <string name="mq_follower_desc">Siga outra conta Glutec através da nuvem do fornecedor. Ao ativar, o GIS Monitor cria um sensor seguidor apenas de leitura.</string>
+    <string name="mq_follower_desc">Siga outra conta Glutec através da nuvem do fornecedor. Ao ativar, o Solmi Sensor cria um sensor seguidor apenas de leitura.</string>
     <string name="mq_follower_account_label">Conta a seguir</string>
     <string name="mq_follower_account_desc">Introduza o número de telefone ou a conta Glutec a seguir.</string>
     <string name="mq_follower_enabled_summary">Seguidor ligado</string>
@@ -1880,9 +1880,9 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="mirror_host_error_database_busy">Banco de dados ocupado, tente novamente</string>
     <string name="mirror_host_error_ice_label_short">O rótulo ICE deve ter pelo menos 16 caracteres</string>
     <string name="mirror_invalid_qr_code">Código QR inválido</string>
-    <string name="mirror_scan_prompt">Escaneie o QR do espelho GIS Monitor</string>
+    <string name="mirror_scan_prompt">Escaneie o QR do espelho Solmi Sensor</string>
     <string name="mirror_connect_device_title">Conectar a este dispositivo?</string>
-    <string name="mirror_connect_qr_message">Um código QR do espelho GIS Monitor foi escaneado. Isso sincronizará dados de glicose com o dispositivo remoto.</string>
+    <string name="mirror_connect_qr_message">Um código QR do espelho Solmi Sensor foi escaneado. Isso sincronizará dados de glicose com o dispositivo remoto.</string>
     <string name="mirror_connect_qr_turn_message">Este QR híbrido também substitui a configuração híbrida deste dispositivo.</string>
     <string name="mirror_connect_action">Conectar</string>
     <string name="mirror_connect_nearby_title">Conectar a %1$s?</string>
@@ -2483,20 +2483,20 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sensor_handover_multiple_text">O sensor expirou, mas há vários sensores sucessores ativos. Transferência automática ignorada; mude manualmente.</string>
     <string name="sensor_handover_successor_ready">O sensor sucessor está pronto; a transferência automática assume na expiração</string>
     <string name="nightscout_upload_iob">Enviar insulina ativa</string>
-    <string name="nightscout_upload_iob_desc">Usar a IOB do GIS Monitor em vez da IOB do Nightscout</string>
+    <string name="nightscout_upload_iob_desc">Usar a IOB do Solmi Sensor em vez da IOB do Nightscout</string>
     <string name="journal_iob_source_remote">Valores do dispositivo que envia os dados (Nightscout)</string>
     <string name="ottai_cloud_already_binding">Ainda existe outro sensor associado à conta Ottai. Abra «Sensores da conta Ottai» e desassocie-o, depois tente novamente.</string>
-    <string name="ottai_cloud_unbind_hint">Ação apenas na conta da nuvem. O GIS Monitor não se ligará ao sensor selecionado nem o parará, removerá ou modificará.</string>
+    <string name="ottai_cloud_unbind_hint">Ação apenas na conta da nuvem. O Solmi Sensor não se ligará ao sensor selecionado nem o parará, removerá ou modificará.</string>
     <string name="ottai_cloud_unbind_title">Desassociar permanentemente este sensor?</string>
-    <string name="ottai_cloud_unbind_message">%1$s será removido permanentemente desta conta Ottai. A conta deixará de poder obter as suas credenciais e o sensor deixará de funcionar na aplicação Ottai oficial. As credenciais e o estado do sensor já guardados no GIS Monitor não serão alterados. Esta ação não pode ser anulada.</string>
+    <string name="ottai_cloud_unbind_message">%1$s será removido permanentemente desta conta Ottai. A conta deixará de poder obter as suas credenciais e o sensor deixará de funcionar na aplicação Ottai oficial. As credenciais e o estado do sensor já guardados no Solmi Sensor não serão alterados. Esta ação não pode ser anulada.</string>
     <string name="ottai_cloud_unbind_confirm">Desassociar permanentemente</string>
-    <string name="ottai_cloud_unbind_success">Sensor desassociado permanentemente do Ottai. O sensor e as credenciais guardadas no GIS Monitor não foram alterados.</string>
+    <string name="ottai_cloud_unbind_success">Sensor desassociado permanentemente do Ottai. O sensor e as credenciais guardadas no Solmi Sensor não foram alterados.</string>
     <string name="ottai_cloud_unbind_failed">Não foi possível desassociar o sensor do Ottai.</string>
     <string name="ottai_disconnect_forget_unbind">Remover credenciais e desvincular</string>
     <string name="ottai_disconnect_forget_unbind_desc">Apaga as chaves guardadas e desvincula o sensor da conta Ottai. Não poderá voltar a ser ligado.</string>
     <string name="ottai_disconnect_unbind_failed">Credenciais removidas, mas o sensor continua vinculado à conta Ottai. Desvincule-o na configuração Ottai.</string>
     <string name="ottai_unused_binding_title">Sensor ainda vinculado a esta conta</string>
-    <string name="ottai_unused_binding_desc">%1$s está vinculado a esta conta Ottai, mas não está ligado no GIS Monitor. Se já terminou, desvincule-o para que a conta possa ativar um novo sensor.</string>
+    <string name="ottai_unused_binding_desc">%1$s está vinculado a esta conta Ottai, mas não está ligado no Solmi Sensor. Se já terminou, desvincule-o para que a conta possa ativar um novo sensor.</string>
     <string name="ottai_cloud_binding_checking">A verificar a associação à nuvem Ottai…</string>
     <string name="ottai_cloud_binding_bound">Estado da nuvem: associado a esta conta Ottai</string>
     <string name="ottai_cloud_binding_not_bound">Estado da nuvem: não associado a esta conta Ottai</string>
@@ -2558,7 +2558,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sms_max_per_hour">Máx. mensagens por hora</string>
     <string name="sms_max_per_day">Máx. mensagens por dia</string>
     <string name="sms_sent_today">Enviadas nas últimas 24 horas: %1$d</string>
-    <string name="sms_permission_desc">O GIS Monitor precisa de permissão para enviar SMS antes de este destino funcionar.</string>
+    <string name="sms_permission_desc">O Solmi Sensor precisa de permissão para enviar SMS antes de este destino funcionar.</string>
     <string name="sms_permission_grant">Permitir</string>
     <string name="sms_no_telephony">Este dispositivo não consegue enviar SMS.</string>
     <string name="sms_preview_title">Pré-visualização</string>
@@ -2576,7 +2576,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="sms_event_no_data">Sem dados do sensor há %1$d min</string>
     <string name="sms_event_all_clear">Tudo bem</string>
     <string name="sms_event_relay">Atualização (sem ligação de dados)</string>
-    <string name="sms_event_test">Mensagem de teste do GIS Monitor</string>
+    <string name="sms_event_test">Mensagem de teste do Solmi Sensor</string>
     <string name="sms_body_no_reading">Ainda sem leitura</string>
 
     <!-- In-app updates (GitHub releases) -->
@@ -2616,13 +2616,13 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="app_updates_verifying_title">A verificar a transferência</string>
     <string name="app_updates_verifying_body">A conferir a assinatura e a versão antes de instalar.</string>
     <string name="app_updates_ready_title">%1$s pronta para instalar</string>
-    <string name="app_updates_ready_body">O Android vai pedir confirmação. O GIS Monitor fecha e volta a abrir; as ligações aos sensores retomam sozinhas.</string>
+    <string name="app_updates_ready_body">O Android vai pedir confirmação. O Solmi Sensor fecha e volta a abrir; as ligações aos sensores retomam sozinhas.</string>
     <string name="app_updates_up_to_date_title">Está na versão mais recente</string>
     <string name="app_updates_last_checked">Última verificação %1$s</string>
     <string name="app_updates_never_checked">nunca</string>
     <string name="app_updates_error_title">Falha ao verificar atualizações</string>
-    <string name="app_updates_permission_title">Permitir instalações a partir do GIS Monitor</string>
-    <string name="app_updates_permission_body">O Android precisa de uma permissão única para que o GIS Monitor possa instalar a sua própria atualização.</string>
+    <string name="app_updates_permission_title">Permitir instalações a partir do Solmi Sensor</string>
+    <string name="app_updates_permission_body">O Android precisa de uma permissão única para que o Solmi Sensor possa instalar a sua própria atualização.</string>
     <string name="app_updates_permission_action">Abrir definições</string>
     <string name="app_updates_unsupported_store_title">As atualizações vêm da sua loja de apps</string>
     <string name="app_updates_unsupported_store_body">Esta cópia foi instalada por %1$s, que gere as atualizações por si.</string>
@@ -2633,11 +2633,11 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="app_updates_error_parse">A fonte de atualizações devolveu algo inesperado.</string>
     <string name="app_updates_error_no_artifact">O último lançamento não tem ficheiro para esta compilação.</string>
     <string name="app_updates_error_checksum">A transferência não correspondeu à soma de verificação e foi eliminada.</string>
-    <string name="app_updates_error_signature">O APK transferido está assinado com outra chave e foi eliminado. Instale o GIS Monitor apenas a partir da página oficial de lançamentos.</string>
+    <string name="app_updates_error_signature">O APK transferido está assinado com outra chave e foi eliminado. Instale o Solmi Sensor apenas a partir da página oficial de lançamentos.</string>
     <string name="app_updates_error_package">O APK transferido pertence a outra aplicação.</string>
     <string name="app_updates_error_downgrade">Esse lançamento não é mais recente do que a versão instalada.</string>
     <string name="app_updates_error_storage">Espaço livre insuficiente para a transferência.</string>
-    <string name="app_updates_error_install_permission">O GIS Monitor ainda não tem permissão para instalar aplicações.</string>
+    <string name="app_updates_error_install_permission">O Solmi Sensor ainda não tem permissão para instalar aplicações.</string>
     <string name="app_updates_error_install_failed">A instalação não foi concluída.</string>
     <string name="app_updates_error_cancelled">Instalação cancelada.</string>
     <string name="app_updates_source_title">Fonte de atualizações</string>
@@ -2916,7 +2916,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="wearos_config_title">Configuração Wear OS</string>
     <string name="watch_status_section">Estado do relógio</string>
     <string name="watch_none_found">Nenhum relógio Wear OS encontrado</string>
-    <string name="watch_none_found_hint">Abra o GIS Monitor no relógio e toque em atualizar</string>
+    <string name="watch_none_found_hint">Abra o Solmi Sensor no relógio e toque em atualizar</string>
     <string name="watch_routing_section">Encaminhamento</string>
     <string name="watch_enter_amounts">Introduzir quantidades no relógio</string>
     <string name="watch_enter_amounts_on">As entradas feitas no relógio são guardadas e sincronizadas com o telemóvel.</string>
@@ -3061,7 +3061,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
     <string name="cal_step4">Insira o valor nas calibrações imediatamente. Uma medição antiga não serve mais.</string>
     <string name="cal_dont">Não calibre durante oscilações bruscas, quando a glicose muda rápido ou se duvidar da medição.</string>
     <string name="cal_from_gis_title">Calibração pelo app GIS</string>
-    <string name="cal_from_gis_text">Uma medição também pode ser inserida no app GIS: ela chega aqui e conta como se fosse inserida no GIS Monitor, e o AAPS e o Nightscout recebem o valor calibrado. Para isso, ative a recepção abaixo. Por padrão fica desativada, para que apps de terceiros não alterem sua calibração.</string>
+    <string name="cal_from_gis_text">Uma medição também pode ser inserida no app GIS: ela chega aqui e conta como se fosse inserida no Solmi Sensor, e o AAPS e o Nightscout recebem o valor calibrado. Para isso, ative a recepção abaixo. Por padrão fica desativada, para que apps de terceiros não alterem sua calibração.</string>
     <string name="cal_accept_gis">Aceitar calibrações do GIS</string>
     <string name="cal_open">Abrir calibrações</string>
     <string name="cal_ocr_fail">Número não reconhecido. Insira manualmente.</string>

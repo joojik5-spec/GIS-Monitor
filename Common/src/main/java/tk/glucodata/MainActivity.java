@@ -1084,7 +1084,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             finish();
             keeprunning.stop();
             System.exit(7);
-        }).setTitle("GIS Monitor has to exit").setMessage(message).show().setCanceledOnTouchOutside(false);
+        }).setTitle("Солми Сенсор будет закрыт").setMessage(message).show().setCanceledOnTouchOutside(false);
 
     }
 
@@ -1103,7 +1103,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         var dialog = builder.setNegativeButton(R.string.ok, (dial, id) -> {
             end.run();
             // User cancelled the dialog
-        }).setTitle("GIS Monitor has to exit").setMessage(message).create();
+        }).setTitle("Солми Сенсор будет закрыт").setMessage(message).create();
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnShowListener(d -> {
             Log.e(LOG_ID, "setOnShowListener");

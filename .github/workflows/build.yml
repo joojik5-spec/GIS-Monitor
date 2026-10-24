@@ -2,7 +2,7 @@ name: Build GIS Monitor
 on:
   workflow_dispatch:
   push:
-    branches: [ gis-monitor, gis-monitor-v2 ]
+    branches: [ gis-monitor, gis-monitor-v2, solmi-sensor ]
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -47,6 +47,7 @@ jobs:
           name: GIS-Monitor-apk
           path: "**/build/outputs/apk/**/*.apk"
       - name: Publish APK to monitor-apk branch
+        if: github.ref != 'refs/heads/solmi-sensor'
         run: |
           f=$(find . -path "*/build/outputs/apk/*" -name "*.apk" | head -1)
           mkdir -p "$RUNNER_TEMP/apk"; cp "$f" "$RUNNER_TEMP/apk/gis-monitor.apk"

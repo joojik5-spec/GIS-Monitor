@@ -1,5 +1,6 @@
 /*  GIS Monitor — based on Juggluco (GPL-3). Local data bridge for the GIS app: no internet, two interfaces only.   */
-/*  Provider  content://com.gismonitor.data/latest   (columns: ts, raw_mgdl, cal_mgdl, trend, sensor_name, sensor_start, sensor_end, signal) */
+/*  Provider  content://ru.solmi.sensor.data/latest (and legacy content://com.gismonitor.data/latest), permission ru.solmi.permission.SENSOR_DATA (signature)
+               (columns: ts, raw_mgdl, cal_mgdl, trend, sensor_name, sensor_start, sensor_end, signal) */
 /*  Broadcast com.gismonitor.CALIBRATE               (extras: ts, meter_mgdl)                                          */
 package tk.glucodata;
 
@@ -41,6 +42,7 @@ public class GisBridge extends ContentProvider {
                 .putString("name", name(sensorGen)).putLong("start", sensorStartMs)
                 .putLong("end", realEndMs > sensorStartMs && sensorStartMs > 0 ? realEndMs : (sensorStartMs > 0 ? sensorStartMs + (sensorGen == 0x15 ? 22L : days) * 86_400_000L : 0L))
                 .apply();
+            c.getContentResolver().notifyChange(Uri.parse("content://ru.solmi.sensor.data/latest"), null);
             c.getContentResolver().notifyChange(Uri.parse("content://com.gismonitor.data/latest"), null);
         } catch (Throwable ignored) { }
     }
