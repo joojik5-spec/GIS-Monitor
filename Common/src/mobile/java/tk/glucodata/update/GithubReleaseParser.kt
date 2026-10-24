@@ -98,7 +98,7 @@ object GithubReleaseParser {
     }
 
     /** Parses `update-manifest.json`. Returns null for an unknown schema or malformed content. */
-    fun parseManifest(json: String): UpdateManifest? {
+    fun parseManifest(json: String, installedCode: Int = tk.glucodata.BuildConfig.VERSION_CODE): UpdateManifest? {
         val obj = runCatching { JSONObject(json) }.getOrNull() ?: return null
         if (obj.optInt("schema", 0) != MANIFEST_SCHEMA) return null
         val versionName = obj.optString("versionName").takeIf { it.isNotBlank() } ?: return null
@@ -123,9 +123,26 @@ object GithubReleaseParser {
             versionName = versionName,
             versionCode = versionCode,
             minSdk = obj.optInt("minSdk", 0),
-            notes = obj.optString("notes").takeIf { it.isNotBlank() && it != "null" },
+            notes = historyNotes(obj.optJSONArray("history"), installedCode)
+                ?: obj.optString("notes").takeIf { it.isNotBlank() && it != "null" },
             artifacts = artifacts
         )
+    }
+
+    /** Изменения от установленной версии до новой, по версиям, новые сверху. */
+    internal fun historyNotes(history: JSONArray?, installedCode: Int): String? {
+        if (history == null) return null
+        val groups = ArrayList<Pair<Int, String>>()
+        for (i in 0 until history.length()) {
+            val h = history.optJSONObject(i) ?: continue
+            val code = h.optInt("code", 0)
+            val text = h.optString("notes").trim()
+            if (code <= installedCode || text.isEmpty()) continue
+            val name = h.optString("name").takeIf { it.isNotBlank() } ?: code.toString()
+            groups += code to (name + "\n" + text)
+        }
+        if (groups.isEmpty()) return null
+        return groups.sortedByDescending { it.first }.joinToString("\n\n") { it.second }
     }
 
     /**

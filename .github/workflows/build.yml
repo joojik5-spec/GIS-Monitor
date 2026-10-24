@@ -68,7 +68,7 @@ jobs:
           name: GIS-Monitor-apk
           retention-days: 14
           path: "**/build/outputs/apk/**/*.apk"
-      # Канал обновлений Solmi Sensor: папка solmi-sensor/ в gis-updates; остальное там не трогаем.
+      # Канал обновлений Solmi Sensor: папка solmi-sensor/ в gis-updates (ветка solmi); остальное там не трогаем.
       - name: Publish Solmi Sensor update channel
         if: github.ref == 'refs/heads/solmi-sensor'
         env:
@@ -78,7 +78,8 @@ jobs:
           mkdir -p ~/.ssh; printf '%s\n' "$KEY" > ~/.ssh/gis_dk; chmod 600 ~/.ssh/gis_dk
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/gis_dk -o IdentitiesOnly=yes"
-          D="$RUNNER_TEMP/gu"; git clone -q --depth 1 git@github.com:joojik5-spec/gis-updates.git "$D"
+          D="$RUNNER_TEMP/gu"; U=git@github.com:joojik5-spec/gis-updates.git
+          git clone -q --depth 1 -b solmi "$U" "$D" || { git init -q "$D"; git -C "$D" checkout -q --orphan solmi; git -C "$D" remote add origin "$U"; }
           f=$(find . -path "*/build/outputs/apk/*" -name "*.apk" | head -1)
           mkdir -p "$D/solmi-sensor"; cp "$f" "$D/solmi-sensor/solmi-sensor.apk"
           N=${{ github.run_number }}
@@ -94,15 +95,14 @@ jobs:
           hist = [h for h in prev.get("history", []) if h.get("code") != code]
           if hist and hist[-1].get("notes") == text: text = "• Исправления и улучшения"
           hist = (hist + [{"code": code, "name": "solmi-sensor-1.0." + n, "notes": text}])[-40:]
-          # приложение показывает одно поле notes: собираем изменения последних версий по группам, новые сверху
-          notes = "\n\n".join(h.get("name", str(h["code"])) + "\n" + h["notes"] for h in reversed(hist[-10:]))
+          notes = text  # приложение само собирает изменения из history от установленной версии
           b = open(d + "/solmi-sensor.apk", "rb").read()
           m = {"schema": 1, "versionName": "solmi-sensor-1.0." + n, "versionCode": code, "minSdk": 0, "notes": notes, "history": hist,
                "artifacts": [{"applicationId": "ru.solmi.sensor", "file": "solmi-sensor.apk", "size": len(b), "sha256": hashlib.sha256(b).hexdigest(), "url": "solmi-sensor.apk"}]}
           open(d + "/update-manifest.json", "w", encoding="utf-8").write(json.dumps(m, ensure_ascii=False) + "\n")
           PY
           cd "$D"; git add solmi-sensor; git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "solmi-sensor $N"
-          for i in 1 2 3; do git push -q origin HEAD:main && break; git pull -q --rebase origin main; done
+          for i in 1 2 3; do git push -q origin HEAD:solmi && break; git pull -q --rebase origin solmi; done
           echo "Канал Solmi Sensor: solmi-sensor-1.0.$N опубликована" >> "$GITHUB_STEP_SUMMARY"
       - name: Publish APK to monitor-apk branch
         if: github.ref != 'refs/heads/solmi-sensor'
