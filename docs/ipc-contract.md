@@ -21,7 +21,10 @@
 При каждом новом значении вызывается `notifyChange` на оба адреса — подписывайтесь через `ContentObserver`.
 
 ## Калибровка
-Broadcast `com.gismonitor.CALIBRATE` (extras `ts`, `meter_mgdl`) — без изменений.
+Broadcast `ru.solmi.sensor.CALIBRATE` или старый `com.gismonitor.CALIBRATE` (extras `ts`, `meter_mgdl`), пакет `ru.solmi.sensor`.
+
+## Всплывающее окно
+Activity-интент `ru.solmi.sensor.POPUP` или старый `com.gismonitor.POPUP`.
 
 ## Прочее
 Рассылки для AAPS, xDrip и Nightscout не менялись.
