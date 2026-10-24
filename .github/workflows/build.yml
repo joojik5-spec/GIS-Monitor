@@ -66,6 +66,7 @@ jobs:
         continue-on-error: true
         with:
           name: GIS-Monitor-apk
+          retention-days: 14
           path: "**/build/outputs/apk/**/*.apk"
       - name: Publish APK to monitor-apk branch
         if: github.ref != 'refs/heads/solmi-sensor'
