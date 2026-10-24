@@ -41,7 +41,8 @@ jobs:
             echo "RELEASE=1" >> $GITHUB_ENV
           fi
       - name: Build
-        run: ./gradlew --no-daemon -PgisBuild=${{ github.run_number }} $SIGN assembleMobileRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
+        run: |
+          ./gradlew --no-daemon -PgisBuild=${{ github.run_number }} $SIGN assembleMobileRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
           for f in $(find . -path "*/build/outputs/apk/*" -name "*.apk"); do $(ls $ANDROID_SDK_ROOT/build-tools/*/apksigner | tail -1) verify --print-certs "$f" | grep -i "SHA-256" || true; done
         shell: bash
       - name: Why failed
