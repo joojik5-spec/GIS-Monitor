@@ -2,7 +2,7 @@ name: Build GIS Monitor
 on:
   workflow_dispatch:
   push:
-    branches: [ gis-monitor, gis-monitor-v2, solmi-sensor ]
+    branches: [ gis-monitor, gis-monitor-v2 ]
 jobs:
   apk:
     runs-on: ubuntu-latest
