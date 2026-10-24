@@ -45,6 +45,16 @@ jobs:
           ./gradlew --no-daemon -PgisBuild=${{ github.run_number }} $SIGN assembleMobileRelease 2>&1 | tee build.log; test ${PIPESTATUS[0]} -eq 0
           for f in $(find . -path "*/build/outputs/apk/*" -name "*.apk"); do $(ls $ANDROID_SDK_ROOT/build-tools/*/apksigner | tail -1) verify --print-certs "$f" | grep -i "SHA-256" || true; done
         shell: bash
+      - name: Verify Solmi signature
+        shell: bash
+        run: |
+          EXP=fb27861b3b589c6933f176aefa6d2bf129c61fb7daa91651aaa11e883cdfb283
+          AS=$(ls ${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools/*/apksigner | sort -V | tail -1)
+          f=$(find . -path "*/build/outputs/apk/*" -name "*.apk" | head -1)
+          GOT=$("$AS" verify --print-certs "$f" | grep -i "SHA-256 digest" | head -1 | sed 's/.*: *//' | tr -d ': ' | tr 'A-F' 'a-f')
+          if [ "$GOT" = "$EXP" ]; then M="Подпись: ключ Solmi ✔"; else M="Подпись: чужой ключ ✘ ($GOT)"; fi
+          echo "$M"; echo "$M" >> "$GITHUB_STEP_SUMMARY"
+          [ "$GOT" = "$EXP" ]
       - name: Why failed
         if: failure()
         shell: bash
