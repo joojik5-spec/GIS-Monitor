@@ -110,6 +110,32 @@ class GithubReleaseParserTests {
     }
 
     @Test
+    fun `manifest combines only changes newer than installed build`() {
+        val manifest = GithubReleaseParser.parseManifest(
+            """
+            {
+              "schema": 1,
+              "versionName": "1.3.0-Solmi.12",
+              "versionCode": 1312,
+              "history": [
+                {"code": 1309, "name": "1.3.0-Solmi.9", "notes": "old"},
+                {"code": 1310, "name": "1.3.0-Solmi.10", "notes": "first"},
+                {"code": 1312, "name": "1.3.0-Solmi.12", "notes": "latest"}
+              ],
+              "artifacts": [
+                {"applicationId": "ru.solmi.sensor", "file": "solmi-sensor.apk"}
+              ]
+            }
+            """.trimIndent(),
+            installedCode = 1309,
+        )
+        assertEquals(
+            "1.3.0-Solmi.12\nlatest\n\n1.3.0-Solmi.10\nfirst",
+            manifest!!.notes,
+        )
+    }
+
+    @Test
     fun `version code decides when the manifest declares one`() {
         val release = GithubReleaseParser.parseReleases("[${release()}]").single()
         val update = GithubReleaseParser.toAvailableUpdate(

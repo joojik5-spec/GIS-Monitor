@@ -204,9 +204,13 @@ object UpdateArtifacts {
 
     private const val PREFIX = "JugglucoNG-"
     private const val SUFFIX = ".apk"
+    private val SAFE_APK_NAME = Regex("^[A-Za-z0-9][A-Za-z0-9._-]{0,126}\\.apk$")
 
     /** Tokens the filename builder can append. Anything else in the name is version text. */
     private val VARIANT_TOKENS = setOf("wear", "debug", "dub", "dub2")
+
+    /** A remote manifest must never be able to turn an APK name into a filesystem path. */
+    fun isSafeFileName(fileName: String): Boolean = SAFE_APK_NAME.matches(fileName)
 
     /**
      * The variant tokens an artifact must carry to be installable over [applicationId], or null

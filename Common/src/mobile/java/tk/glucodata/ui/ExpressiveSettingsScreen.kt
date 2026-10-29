@@ -105,8 +105,18 @@ fun ExpressiveSettingsScreen(
     navController: NavController,
     themeMode: ThemeMode,
     onThemeChanged: (ThemeMode) -> Unit,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = viewModel(),
+    category: String? = null,
+    onCategoryBack: (() -> Unit)? = null,
 ) {
+    fun showGroup(key: String): Boolean = category == null || key == "title" || when (category) {
+        "Appearance" -> key in setOf("general_group", "general_glucose_group")
+        "Alerts" -> key.startsWith("notif_") || key == "alerts_group"
+        "Connections" -> key == "exchange_group"
+        "Data" -> key.startsWith("data_") || key == "general_glucose_group"
+        "Advanced" -> key.startsWith("adv_") || key.startsWith("danger_") || key == "about"
+        else -> true
+    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val sensorStatusRevision by tk.glucodata.UiRefreshBus.revision.collectAsStateWithLifecycle()
@@ -258,11 +268,23 @@ fun ExpressiveSettingsScreen(
             .statusBarsPadding(), // Add status bar padding
         contentPadding = TabScreenDefaults.contentPadding()
     ) {
-        item(key = "title") {
-            TabScreenHeader(title = stringResource(R.string.settings))
+        if (showGroup("title")) item(key = "title") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onCategoryBack != null) TextButton(onClick = onCategoryBack) {
+                    Text("‹", style = MaterialTheme.typography.headlineMedium)
+                }
+                TabScreenHeader(title = stringResource(when(category) {
+                    "Appearance" -> R.string.settings_hub_appearance
+                    "Alerts" -> R.string.settings_hub_alerts
+                    "Data" -> R.string.settings_hub_data
+                    "Connections" -> R.string.settings_hub_connections
+                    "Advanced" -> R.string.settings_hub_advanced
+                    else -> R.string.settings
+                }))
+            }
         }
 
-        item(key = "general_group") {
+        if (showGroup("general_group")) item(key = "general_group") {
             val generalColor = MaterialTheme.colorScheme.primary
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsItem(
@@ -285,7 +307,7 @@ fun ExpressiveSettingsScreen(
             }
         }
 
-        item(key = "general_glucose_group") {
+        if (showGroup("general_glucose_group")) item(key = "general_glucose_group") {
             val glucoseColor = MaterialTheme.colorScheme.primary
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -366,11 +388,11 @@ fun ExpressiveSettingsScreen(
         }
 
         // === NOTIFICATIONS ===
-        item(key = "notif_label") { SectionLabel(stringResource(R.string.notifications)) }
+        if (showGroup("notif_label")) item(key = "notif_label") { SectionLabel(stringResource(R.string.notifications)) }
 
-        item(key = "notif_group") {
+        if (showGroup("notif_group")) item(key = "notif_group") {
             // Theme: Secondary (Accent)
-            val notifColor = MaterialTheme.colorScheme.secondary
+            val notifColor = MaterialTheme.colorScheme.primary
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsNavSwitchItem(
                     title = stringResource(R.string.glucose_alerts_title),
@@ -445,17 +467,17 @@ fun ExpressiveSettingsScreen(
         }
         // === ALERTS ===
 
-        item(key = "alerts_group") {
+        if (showGroup("alerts_group")) item(key = "alerts_group") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
             }
         }
         // === EXCHANGES ===
-        item(key = "exchange_label") { SectionLabel(stringResource(R.string.exchanges)) }
+        if (showGroup("exchange_label")) item(key = "exchange_label") { SectionLabel(stringResource(R.string.exchanges)) }
 
-        item(key = "exchange_group") {
+        if (showGroup("exchange_group")) item(key = "exchange_group") {
             // Theme: Tertiary (Apps/Services)
-            val exchangeColor = MaterialTheme.colorScheme.tertiary
+            val exchangeColor = MaterialTheme.colorScheme.primary
             val xdripEnabled by viewModel.xDripBroadcastEnabled.collectAsStateWithLifecycle()
             val glucodataBroadcastEnabled by viewModel.glucodataBroadcastEnabled.collectAsStateWithLifecycle()
             val broadcastComputedTrend by viewModel.broadcastComputedTrend.collectAsStateWithLifecycle()
@@ -466,7 +488,7 @@ fun ExpressiveSettingsScreen(
                     title = stringResource(R.string.xdripbroadcast),
                     subtitle = stringResource(R.string.patchedlibrebroadcast),
                     checked = patchedLibreEnabled,
-                    icon = Icons.Default.Share, 
+
                     iconTint = exchangeColor,
                     position = CardPosition.TOP,
                     onCheckedChange = { viewModel.togglePatchedLibreBroadcast(it) }
@@ -475,7 +497,7 @@ fun ExpressiveSettingsScreen(
                     title = stringResource(R.string.xdrip_compatible_title),
                     subtitle = stringResource(R.string.xdrip_compatible_desc),
                     checked = xdripEnabled,
-                    icon = Icons.Default.Radio, 
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onCheckedChange = { viewModel.toggleXDripBroadcast(it) }
@@ -487,7 +509,7 @@ fun ExpressiveSettingsScreen(
                         title = stringResource(R.string.xdrip_report_as_libre2_title),
                         subtitle = stringResource(R.string.xdrip_report_as_libre2_desc),
                         checked = xdripReportAsLibre2,
-                        icon = Icons.Default.Badge,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onCheckedChange = { viewModel.setXdripReportAsLibre2(it) }
@@ -497,7 +519,7 @@ fun ExpressiveSettingsScreen(
                     title = stringResource(R.string.aaps_broadcast),
                     subtitle = stringResource(R.string.glucodata_subtitle),
                     checked = glucodataBroadcastEnabled,
-                    icon = Icons.AutoMirrored.Filled.Send,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onCheckedChange = { viewModel.toggleGlucodataBroadcast(it) }
@@ -509,7 +531,7 @@ fun ExpressiveSettingsScreen(
                         title = stringResource(R.string.gis_broadcast),
                         subtitle = stringResource(R.string.gis_broadcast_desc),
                         checked = gisShare,
-                        icon = Icons.AutoMirrored.Filled.Send,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onCheckedChange = { gisShare = it; GisBridge.setShare(ctx, it) }
@@ -527,7 +549,7 @@ fun ExpressiveSettingsScreen(
                         title = stringResource(R.string.broadcast_computed_trend_title),
                         subtitle = stringResource(R.string.broadcast_computed_trend_desc),
                         checked = broadcastComputedTrend,
-                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onCheckedChange = { viewModel.setBroadcastComputedTrend(it) }
@@ -538,7 +560,7 @@ fun ExpressiveSettingsScreen(
                         title = stringResource(R.string.health_connect_title),
                         subtitle = stringResource(R.string.health_connect_desc),
                         checked = healthConnectEnabled,
-                        icon = Icons.Default.HealthAndSafety,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onCheckedChange = { enabled ->
@@ -557,7 +579,7 @@ fun ExpressiveSettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.outbound_api_title),
                     subtitle = stringResource(R.string.outbound_api_desc),
-                    icon = Icons.Default.CloudUpload,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onClick = { navController.navigate("settings/outbound-api") }
@@ -565,7 +587,7 @@ fun ExpressiveSettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.dexcom_share_title),
                     subtitle = stringResource(R.string.dexcom_share_desc),
-                    icon = Icons.Default.CloudUpload,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onClick = { navController.navigate("settings/dexcom-share") }
@@ -573,7 +595,7 @@ fun ExpressiveSettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.mirror),
                     subtitle = stringResource(R.string.mirror_desc),
-                    icon = Icons.Default.Devices,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onClick = { navController.navigate("settings/mirror") }
@@ -590,7 +612,7 @@ fun ExpressiveSettingsScreen(
                         nightscoutActive = it
                     },
                     onClick = { navController.navigate("settings/nightscout") },
-                    icon = Icons.Default.CloudUpload,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE
                 )
@@ -598,7 +620,7 @@ fun ExpressiveSettingsScreen(
                     SettingsItem(
                         title = stringResource(R.string.libreview_config),
                         subtitle = stringResource(R.string.libreview_desc),
-                        icon = Icons.Default.Cloud,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onClick = { navController.navigate("settings/libreview") }
@@ -608,7 +630,7 @@ fun ExpressiveSettingsScreen(
                     SettingsItem(
                         title = stringResource(R.string.mq_account_title),
                         subtitle = stringResource(R.string.mq_account_linked_desc),
-                        icon = Icons.Default.Cloud,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onClick = { navController.navigate("settings/mq-account") }
@@ -618,7 +640,7 @@ fun ExpressiveSettingsScreen(
                     SettingsItem(
                         title = stringResource(R.string.ottai_setup_title),
                         subtitle = stringResource(R.string.ottai_settings_desc),
-                        icon = Icons.Default.Sensors,
+
                         iconTint = exchangeColor,
                         position = CardPosition.MIDDLE,
                         onClick = { navController.navigate("settings/ottai") }
@@ -627,7 +649,7 @@ fun ExpressiveSettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.meterlist),
                     subtitle = stringResource(R.string.glucose_meters_desc),
-                    icon = Icons.Default.Bloodtype,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onClick = { navController.navigate("settings/glucose-meters") }
@@ -640,14 +662,14 @@ fun ExpressiveSettingsScreen(
                     checked = insulinPensEnabled,
                     onCheckedChange = { tk.glucodata.InsulinPenManager.setEnabled(it) },
                     onClick = { navController.navigate("settings/insulin-pens") },
-                    icon = Icons.Default.Vaccines,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE
                 )
                 SettingsItem(
                     title = stringResource(R.string.watches),
                     subtitle = "WearOS, Watchdrip, GadgetBridge, Kerfstok",
-                    icon = Icons.Default.Devices,
+
                     iconTint = exchangeColor,
                     position = CardPosition.MIDDLE,
                     onClick = { navController.navigate("settings/watch") }
@@ -663,16 +685,16 @@ fun ExpressiveSettingsScreen(
                         webServerActive = it
                     },
                     onClick = { navController.navigate("settings/webserver") },
-                    icon = Icons.Default.Language,
+
                     iconTint = exchangeColor,
                     position = CardPosition.BOTTOM
                 )
             }
         }
         // === ADVANCED ===
-        item(key = "adv_label") { SectionLabel(stringResource(R.string.advanced_title)) }
+        if (showGroup("adv_label")) item(key = "adv_label") { SectionLabel(stringResource(R.string.advanced_title)) }
 
-        item(key = "adv_group") {
+        if (showGroup("adv_group")) item(key = "adv_group") {
             // Theme: OnSurfaceVariant (Technical/Neutral)
             val advColor = MaterialTheme.colorScheme.onSurfaceVariant
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -740,11 +762,11 @@ fun ExpressiveSettingsScreen(
         }
 
         // === DATA MANAGEMENT ===
-        item(key = "data_label") { SectionLabel(stringResource(R.string.data_management)) }
+        if (showGroup("data_label")) item(key = "data_label") { SectionLabel(stringResource(R.string.data_management)) }
 
-        item(key = "data_group") {
+        if (showGroup("data_group")) item(key = "data_group") {
             // Theme: Secondary (Files match notifications/system)
-            val dataColor = MaterialTheme.colorScheme.secondary
+            val dataColor = MaterialTheme.colorScheme.primary
             val importLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenDocument(),
                 onResult = { uri ->
@@ -865,9 +887,9 @@ fun ExpressiveSettingsScreen(
         }
 
         // === DANGER ===
-        item(key = "danger_label") { SectionLabel(stringResource(R.string.danger_zone), isError = true) }
+        if (showGroup("danger_label")) item(key = "danger_label") { SectionLabel(stringResource(R.string.danger_zone), isError = true) }
 
-        item(key = "danger_group") {
+        if (showGroup("danger_group")) item(key = "danger_group") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Restart App (Low Severity)
                 DangerItem(
@@ -906,7 +928,7 @@ fun ExpressiveSettingsScreen(
         }
 
         // === ABOUT ===
-        item(key = "about") {
+        if (showGroup("about")) item(key = "about") {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

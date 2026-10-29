@@ -191,7 +191,7 @@ private fun EditorSectionLabel(text: String) {
  * gesture was still using — which is why it stuck.
  */
 @Composable
-private fun <T> ReorderableRows(
+internal fun <T> ReorderableRows(
     items: List<T>,
     onReordered: (List<T>) -> Unit,
     row: @Composable (item: T, dragging: Boolean, handle: Modifier) -> Unit

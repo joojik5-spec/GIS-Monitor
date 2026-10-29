@@ -280,6 +280,7 @@ fun DashboardScreen(
     calibrations: List<tk.glucodata.data.calibration.CalibrationEntity> = emptyList(),
     onNavigateToCalibrations: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
+    onNavigateToStatistics: () -> Unit = {},
     onNavigateToMqAccount: () -> Unit = {},
     onNavigateToReadiness: () -> Unit = {},
     onNavigateToAppUpdates: () -> Unit = {},
@@ -292,6 +293,7 @@ fun DashboardScreen(
     // push the whole dashboard down by one gap whenever there is no update to announce.
     val appUpdateBannerVisible = rememberAppUpdateBannerVisible()
     val context = LocalContext.current
+    LaunchedEffect(context) { DashboardLayout.load(context); DashboardExpandedPanelState.load(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val view = LocalView.current
     val dashboardPrefs = remember(context) {
@@ -303,6 +305,10 @@ fun DashboardScreen(
                 dashboardPrefs.getString("dashboard_chart_time_range", TimeRange.H3.name)
             )
         )
+    }
+    val expandedDashboardPanel = DashboardExpandedPanelState.current
+    BackHandler(expandedDashboardPanel != DashboardExpandedPanel.None) {
+        DashboardExpandedPanelState.close()
     }
     LaunchedEffect(timeRange) {
         dashboardPrefs.edit().putString("dashboard_chart_time_range", timeRange.name).apply()
@@ -1555,7 +1561,7 @@ fun DashboardScreen(
                                 unit = unit,
                                 viewMode = viewMode,
                                 index = index,
-                                totalCount = recentReadings.size,
+                                totalCount = recentReadings.size + 1,
                                 history = recentReadingsTrendHistory,
                                 deltaText = recentReadingDeltaTexts.getOrNull(index),
                                 deltaRateMgdlPerMinute = recentReadingDeltas.getOrNull(index)?.rateMgdlPerMinute,
@@ -1736,41 +1742,11 @@ fun DashboardScreen(
                 }
             }
             } else {
-            // PORTRAIT: UNIFIED VERTICAL SCROLL
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(listState, chartExpansionGestureGate) {
-                        awaitEachGesture {
-                            awaitFirstDown(
-                                requireUnconsumed = false,
-                                pass = PointerEventPass.Initial
-                            )
-                            chartExpansionGestureGate.onGestureStarted(
-                                startedAtTop = listState.firstVisibleItemIndex == 0 &&
-                                    listState.firstVisibleItemScrollOffset == 0,
-                                chartExpanded = chartBoostState.floatValue > 0f
-                            )
-                            try {
-                                do {
-                                    val event = awaitPointerEvent(PointerEventPass.Final)
-                                } while (event.changes.any { it.pressed })
-                            } finally {
-                                chartExpansionGestureGate.onGestureEnded()
-                            }
-                        }
-                    }
-                    .nestedScroll(nestedScrollConnection)
-                    .padding(padding),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(dashboardItemSpacing),
-                contentPadding = PaddingValues(top = dashboardListTopPadding, bottom = 12.dp)
-            ) {
-                item {
+            // One scroll surface; all user blocks have stable keys and a persisted order.
+            val headerContent: @Composable (DashboardHeaderPart) -> Unit = { headerPart ->
                     Box(
                         modifier = Modifier
                             .padding(horizontal = contentHorizontalPadding)
-                            .onSizeChanged { measuredHeaderHeightPx = it.height }
                     ) {
                         FontScaleCap {
                             DashboardCombinedHeader(
@@ -1804,175 +1780,222 @@ fun DashboardScreen(
                                 deltaIntervalMinutes = deltaIntervalMinutes,
                                 arrowForecastColorsEnabled = glucoseArrowForecastEnabled,
                                 quietWindowUntilMs = quietWindowUntilMs,
-                                belowHero = if (showPinnedStats) {
-                                    { FontScaleCap(max = 0.82f) { tk.glucodata.ui.stats.PinnedStatsStrip(windowState = pinnedStatsWindow) } }
-                                } else null,
+                                part = headerPart,
+                                belowHero = null,
                                 onQuietWindowClick = onNavigateToQuietWindow,
                                 onHeroClick = {
-                                    val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
-                                    val rawVal = latestPoint?.rawValue ?: autoVal
-                                    triggerCalibrationIfEnabled(
-                                        CalibrationSheetState.New(
-                                            autoVal,
-                                            rawVal,
-                                            latestPoint?.timestamp ?: System.currentTimeMillis(),
-                                            latestPoint?.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
-                                        )
+                                    DashboardExpandedPanelState.current = DashboardExpandedPanelState.current.toggle(
+                                        DashboardExpandedPanel.Statistics
+                                    )
+                                    if (tk.glucodata.BuildConfig.DEBUG) android.util.Log.d("SolmiDisclosure", "panel=${DashboardExpandedPanelState.current}")
+                                },
+                                onChartClick = {
+                                    DashboardExpandedPanelState.current = DashboardExpandedPanelState.current.toggle(
+                                        DashboardExpandedPanel.Chart
                                     )
                                 }
                             )
                         }
                     }
+            }
+            val statsBridge = remember { tk.glucodata.ui.stats.StatsSectionBridge() }
+            if (expandedDashboardPanel == DashboardExpandedPanel.Statistics) {
+                tk.glucodata.ui.stats.StatsScreen(
+                    modifier = Modifier.size(0.dp), embedded = true, sectionBridge = statsBridge)
+            }
+            val visibleBlocks = DashboardLayout.order.filter { block -> when (block) {
+                DashboardBlock.Pinned -> showPinnedStats
+                DashboardBlock.Statistics -> expandedDashboardPanel == DashboardExpandedPanel.Statistics
+                DashboardBlock.Chart -> expandedDashboardPanel == DashboardExpandedPanel.Chart
+                else -> true
+            } }
+            val returnToGlucose = DashboardLayout.returnToGlucose
+            LaunchedEffect(returnToGlucose) {
+                if (returnToGlucose > 0) listState.scrollToItem(1 + visibleBlocks.indexOf(DashboardBlock.Glucose).coerceAtLeast(0))
+            }
+            val dashboardDrag = rememberDashboardDragState(listState)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(dashboardItemSpacing),
+                contentPadding = PaddingValues(top = dashboardListTopPadding, bottom = 12.dp)
+            ) {
+                item(key = "readiness") {
+                    DashboardCgmReadinessBanner(onOpenReadiness = onNavigateToReadiness)
+                    if (appUpdateBannerVisible) DashboardAppUpdateBanner(onOpenAppUpdates = onNavigateToAppUpdates)
                 }
-
-                item {
-                    DashboardCgmReadinessBanner(
-                        modifier = Modifier.padding(horizontal = contentHorizontalPadding),
-                        onOpenReadiness = onNavigateToReadiness
-                    )
-                }
-
-                if (appUpdateBannerVisible) {
-                    item {
-                        DashboardAppUpdateBanner(
-                            modifier = Modifier.padding(horizontal = contentHorizontalPadding),
-                            onOpenAppUpdates = onNavigateToAppUpdates
-                        )
-                    }
-                }
-
-                item {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                    Box(
-                        modifier = Modifier
-                            .padding(
-                                start = contentHorizontalPadding,
-                                top = readingsTopSpacing,
-                                end = contentHorizontalPadding
+                visibleBlocks.forEach { block ->
+                    if (block == DashboardBlock.Statistics) {
+                        items(statsBridge.entries.value, key = { "stats:${it.id}" }) { section ->
+                            Box(dashboardBlockDrag(DashboardBlock.Statistics, "stats:${section.id}", dashboardDrag)
+                                .padding(horizontal = contentHorizontalPadding)) { section.content.value() }
+                        }
+                    } else item(key = block.name) {
+                    Box(dashboardBlockDrag(block, block.name, dashboardDrag)) {
+                    when (block) {
+                        DashboardBlock.Sensor -> headerContent(DashboardHeaderPart.Sensor)
+                        DashboardBlock.Glucose -> headerContent(DashboardHeaderPart.Glucose)
+                        DashboardBlock.Pinned -> Box(Modifier.padding(horizontal = contentHorizontalPadding)) {
+                            FontScaleCap(max = 0.82f) {
+                                tk.glucodata.ui.stats.PinnedStatsStrip(windowState = pinnedStatsWindow)
+                            }
+                        }
+                        DashboardBlock.Statistics -> Unit
+                        DashboardBlock.Chart -> Box(Modifier.padding(horizontal = contentHorizontalPadding)) {
+                            DashboardChartSection(
+                                modifier = Modifier.fillMaxWidth().height(280.dp),
+                                glucoseHistory = glucoseHistory,
+                                dataBounds = chartDataBounds,
+                                onVisibleRangeChanged = viewModel::onChartViewportChanged,
+                                graphLow = graphLow, graphHigh = graphHigh,
+                                targetLow = targetLow, targetHigh = targetHigh, unit = unit,
+                                veryLowThreshold = veryLowThreshold, veryHighThreshold = veryHighThreshold,
+                                viewMode = viewMode, calibrations = calibrations,
+                                onTimeRangeSelected = { timeRange = it }, selectedTimeRange = timeRange,
+                                onPointClick = { point ->
+                                    clearJournalAction()
+                                    triggerCalibrationIfEnabled(CalibrationSheetState.New(
+                                        point.value, point.rawValue, point.timestamp,
+                                        point.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName))
+                                }
                             )
-                    ) {
-                        RecentReadingsCard(
-                            recentReadings = recentReadings,
-                            unit = unit,
-                            viewMode = viewMode,
-                            footerLabel = stringResource(R.string.historyname),
-                            onViewHistory = onNavigateToHistory
-                        ) { index, item ->
-                            ReadingRow(
-                                point = item,
-                                unit = unit,
-                                viewMode = viewMode,
-                                index = index,
-                                totalCount = recentReadings.size,
-                                history = recentReadingsTrendHistory,
-                                deltaText = recentReadingDeltaTexts.getOrNull(index),
-                                deltaRateMgdlPerMinute = recentReadingDeltas.getOrNull(index)?.rateMgdlPerMinute,
-                                peerReadings = recentReadingPeers.getOrNull(index).orEmpty(),
-                                peerSeries = peerSeriesById,
-                                multiSensorActive = multiSensorActive,
-                                sensorId = sensorName,
-                                calibrations = calibrations,
-                                journalEntries = recentReadingJournalEntries[item.timestamp].orEmpty(),
-                                journalPresetsById = journalPresetsById,
-                                journalChipExpanded = false,
-                                onJournalEntryClick = { entry ->
-                                    lastJournalType = entry.type
-                                    clearJournalAction()
-                                    journalEditorRequest = JournalEditorRequest(entry.type, entry.timestamp, entry)
-                                },
-                                showLeadingAction = journalEnabled,
-                                leadingActionEmphasis = if (index == 0) 1f else 0.38f,
-                                onLeadingActionClick = if (journalEnabled) {
-                                    {
-                                        clearJournalAction()
-                                        val rowGlucoseMgDl = if (tk.glucodata.ui.util.GlucoseFormatter.isMmol(unit)) {
-                                            tk.glucodata.ui.util.GlucoseFormatter.mmolToMg(item.value)
-                                        } else {
-                                            item.value
-                                        }
-                                        journalEditorRequest = JournalEditorRequest(
-                                            type = lastJournalType,
-                                            timestamp = item.timestamp,
-                                            suggestedGlucoseMgDl = rowGlucoseMgDl,
-                                            suggestedChartAnchorGlucoseMgDl = rowGlucoseMgDl
-                                                .takeIf { lastJournalType == JournalEntryType.FINGERSTICK }
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                                onValueClick = {
-                                    clearJournalAction()
-                                    triggerCalibrationIfEnabled(
-                                        CalibrationSheetState.New(
-                                            item.value,
-                                            item.rawValue,
-                                            item.timestamp,
-                                            item.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
-                                        )
-                                    )
-                                },
-                                onSensorValueClick = { reading ->
-                                    clearJournalAction()
-                                    val readingSensorId = reading.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
-                                    val readingViewMode = sensorViewModes.entries.firstOrNull { (sensorId, _) ->
-                                        SensorIdentity.matches(sensorId, readingSensorId)
-                                    }?.value ?: viewMode
-                                    triggerCalibrationIfEnabled(
-                                        CalibrationSheetState.New(
-                                            auto = reading.value,
-                                            raw = reading.rawValue,
-                                            timestamp = reading.timestamp,
-                                            sensorId = readingSensorId,
-                                            viewModeOverride = readingViewMode
-                                        )
-                                    )
-                                },
-                                onDeleteReading = { point ->
-                                    viewModel.deleteHistoryReading(point, sensorName)
-                                },
-                                onBaselineHeightMeasured = if (index == 0) {
-                                    { measuredReadingBaselineHeightPx = it }
-                                } else {
-                                    null
-                                },
+                        }
+                        DashboardBlock.Readings -> {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                            Box(
                                 modifier = Modifier
-                            )
+                                    .padding(
+                                        start = contentHorizontalPadding,
+                                        top = readingsTopSpacing,
+                                        end = contentHorizontalPadding
+                                    )
+                            ) {
+                                RecentReadingsCard(
+                                    recentReadings = recentReadings,
+                                    unit = unit,
+                                    viewMode = viewMode,
+                                    footerLabel = stringResource(R.string.historyname),
+                                    onViewHistory = onNavigateToHistory
+                                ) { index, item ->
+                                    ReadingRow(
+                                        point = item,
+                                        unit = unit,
+                                        viewMode = viewMode,
+                                        index = index,
+                                        totalCount = recentReadings.size + 1,
+                                        history = recentReadingsTrendHistory,
+                                        deltaText = recentReadingDeltaTexts.getOrNull(index),
+                                        deltaRateMgdlPerMinute = recentReadingDeltas.getOrNull(index)?.rateMgdlPerMinute,
+                                        peerReadings = recentReadingPeers.getOrNull(index).orEmpty(),
+                                        peerSeries = peerSeriesById,
+                                        multiSensorActive = multiSensorActive,
+                                        sensorId = sensorName,
+                                        calibrations = calibrations,
+                                        journalEntries = recentReadingJournalEntries[item.timestamp].orEmpty(),
+                                        journalPresetsById = journalPresetsById,
+                                        journalChipExpanded = false,
+                                        onJournalEntryClick = { entry ->
+                                            lastJournalType = entry.type
+                                            clearJournalAction()
+                                            journalEditorRequest = JournalEditorRequest(entry.type, entry.timestamp, entry)
+                                        },
+                                        showLeadingAction = journalEnabled,
+                                        leadingActionEmphasis = if (index == 0) 1f else 0.38f,
+                                        onLeadingActionClick = if (journalEnabled) {
+                                            {
+                                                clearJournalAction()
+                                                val rowGlucoseMgDl = if (tk.glucodata.ui.util.GlucoseFormatter.isMmol(unit)) {
+                                                    tk.glucodata.ui.util.GlucoseFormatter.mmolToMg(item.value)
+                                                } else {
+                                                    item.value
+                                                }
+                                                journalEditorRequest = JournalEditorRequest(
+                                                    type = lastJournalType,
+                                                    timestamp = item.timestamp,
+                                                    suggestedGlucoseMgDl = rowGlucoseMgDl,
+                                                    suggestedChartAnchorGlucoseMgDl = rowGlucoseMgDl
+                                                        .takeIf { lastJournalType == JournalEntryType.FINGERSTICK }
+                                                )
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                        onValueClick = {
+                                            clearJournalAction()
+                                            triggerCalibrationIfEnabled(
+                                                CalibrationSheetState.New(
+                                                    item.value,
+                                                    item.rawValue,
+                                                    item.timestamp,
+                                                    item.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
+                                                )
+                                            )
+                                        },
+                                        onSensorValueClick = { reading ->
+                                            clearJournalAction()
+                                            val readingSensorId = reading.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
+                                            val readingViewMode = sensorViewModes.entries.firstOrNull { (sensorId, _) ->
+                                                SensorIdentity.matches(sensorId, readingSensorId)
+                                            }?.value ?: viewMode
+                                            triggerCalibrationIfEnabled(
+                                                CalibrationSheetState.New(
+                                                    auto = reading.value,
+                                                    raw = reading.rawValue,
+                                                    timestamp = reading.timestamp,
+                                                    sensorId = readingSensorId,
+                                                    viewModeOverride = readingViewMode
+                                                )
+                                            )
+                                        },
+                                        onDeleteReading = { point ->
+                                            viewModel.deleteHistoryReading(point, sensorName)
+                                        },
+                                        onBaselineHeightMeasured = if (index == 0) {
+                                            { measuredReadingBaselineHeightPx = it }
+                                        } else {
+                                            null
+                                        },
+                                        modifier = Modifier
+                                    )
+                                }
+                            }
+                            }
+                        }
+                        DashboardBlock.Calibrations -> {
+                            Box(modifier = Modifier.padding(horizontal = contentHorizontalPadding)) {
+                                CalibrationsCard(
+                                    viewMode = viewMode,
+                                    isMmol = tk.glucodata.ui.util.GlucoseFormatter.isMmol(unit),
+                                    sensorId = sensorName,
+                                    showEmptyAction = hasVisibleReadingContent,
+                                    onAddCalibration = {
+                                        val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
+                                        val rawVal = latestPoint?.rawValue ?: autoVal
+                                        triggerCalibrationIfEnabled(
+                                            CalibrationSheetState.New(
+                                                autoVal,
+                                                rawVal,
+                                                latestPoint?.timestamp ?: System.currentTimeMillis(),
+                                                latestPoint?.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
+                                            )
+                                        )
+                                    },
+                                    onEditCalibration = { cal ->
+                                        triggerCalibrationIfEnabled(CalibrationSheetState.Edit(cal))
+                                    },
+                                    onViewHistory = onNavigateToCalibrations,
+                                    snackbarHostState = snackbarHostState
+                                )
+                            }
                         }
                     }
                     }
-                }
-
-                // Calibrations Card
-                item {
-                    Box(modifier = Modifier.padding(horizontal = contentHorizontalPadding)) {
-                        CalibrationsCard(
-                            viewMode = viewMode,
-                            isMmol = tk.glucodata.ui.util.GlucoseFormatter.isMmol(unit),
-                            sensorId = sensorName,
-                            showEmptyAction = hasVisibleReadingContent,
-                            onAddCalibration = {
-                                val autoVal = latestPoint?.value ?: tk.glucodata.GlucoseValueParser.parseFirstOrZero(currentGlucose)
-                                val rawVal = latestPoint?.rawValue ?: autoVal
-                                triggerCalibrationIfEnabled(
-                                    CalibrationSheetState.New(
-                                        autoVal,
-                                        rawVal,
-                                        latestPoint?.timestamp ?: System.currentTimeMillis(),
-                                        latestPoint?.sensorSerial?.takeIf { it.isNotBlank() } ?: sensorName
-                                    )
-                                )
-                            },
-                            onEditCalibration = { cal ->
-                                triggerCalibrationIfEnabled(CalibrationSheetState.Edit(cal))
-                            },
-                            onViewHistory = onNavigateToCalibrations,
-                            snackbarHostState = snackbarHostState
-                        )
                     }
                 }
             }
             }
+
+            DashboardTutorial()
 
             if (journalEnabled && journalDashboardQuickAdd) {
                 JournalExpandableFab(

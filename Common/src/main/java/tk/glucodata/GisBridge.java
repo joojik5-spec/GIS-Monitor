@@ -11,9 +11,11 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.os.Binder;
 
 public class GisBridge extends ContentProvider {
     private static final String PREFS = "gis_bridge";
+    private static final String SOLMI_APP_PACKAGE = "ru.solmi.app";
     private static final String[] COLS = {"ts", "raw_mgdl", "cal_mgdl", "trend", "sensor_name", "sensor_start", "sensor_end", "signal"};
 
     /** Переключатель «Передавать в GIS»: по умолчанию включён. */
@@ -24,7 +26,7 @@ public class GisBridge extends ContentProvider {
         try { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("share", on).apply(); } catch (Throwable ignored) { }
     }
 
-    /** Called for every new value (from SendLikexDrip.broadcastglucose). rate: mg/dL per minute * 60000 scale as in Juggluco. */
+    /** Called for every new value. rate is mg/dL per minute. */
     public static void publish(double glucoseMgdl, float rate, long timeMs, long sensorStartMs, int sensorGen) {
         publish(glucoseMgdl, rate, timeMs, sensorStartMs, sensorGen, 0L);
     }
@@ -34,7 +36,7 @@ public class GisBridge extends ContentProvider {
         try {
             final Context c = Applic.app;
             if (c == null || !shareEnabled(c)) return;
-            final double perMin = rate / 60000.0; // mg/dL per minute
+            final double perMin = rate;
             int trend = perMin >= 3 ? 3 : perMin >= 2 ? 2 : perMin >= 1 ? 1 : perMin > -1 ? 0 : perMin > -2 ? -1 : perMin > -3 ? -2 : -3;
             final long days = sensorGen == 0x10 ? 22 : 14; // Sibionics 2 — 22 days (GS3 as well); other sensors per their own life
             c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -71,7 +73,7 @@ public class GisBridge extends ContentProvider {
                     if (end <= 0) end = Natives.getSensorEndTime(ptr, true);
                 } catch (Throwable ignored) { }
             }
-            publish(raw, p.getRate(), p.getTimeMillis(), start, p.getSensorGen(), end);
+            publish(raw, p.getTrendRate(), p.getTimeMillis(), start, p.getSensorGen(), end);
             final SharedPreferences.Editor e = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
             if (Math.abs(cal - raw) >= 1.0) e.putFloat("cal", (float) cal); else e.remove("cal");
             e.apply();
@@ -89,7 +91,26 @@ public class GisBridge extends ContentProvider {
 
     @Override public boolean onCreate() { return true; }
 
+    /**
+     * The main Solmi app is distributed and signed independently from Solmi Sensor, so a
+     * signature-level manifest permission cannot be shared between them. Keep the exported
+     * read surface narrow by accepting only this provider itself and the fixed Solmi package.
+     */
+    private boolean isAllowedReader() {
+        final Context c = getContext();
+        if (c == null) return false;
+        final int uid = Binder.getCallingUid();
+        if (uid == android.os.Process.myUid()) return true;
+        final String[] packages = c.getPackageManager().getPackagesForUid(uid);
+        if (packages == null) return false;
+        for (String pkg : packages) {
+            if (SOLMI_APP_PACKAGE.equals(pkg)) return true;
+        }
+        return false;
+    }
+
     @Override public Cursor query(Uri uri, String[] p, String s, String[] a, String o) {
+        if (!isAllowedReader()) throw new SecurityException("Solmi Sensor data is available only to Solmi");
         final SharedPreferences sp = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         final MatrixCursor cur = new MatrixCursor(COLS);
         if (sp.getBoolean("share", true) && sp.contains("ts")) {

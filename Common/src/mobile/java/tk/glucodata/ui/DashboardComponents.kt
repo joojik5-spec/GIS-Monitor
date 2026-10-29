@@ -1,5 +1,10 @@
 package tk.glucodata.ui
 
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.foundation.border
 import android.view.HapticFeedbackConstants
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -264,8 +269,10 @@ fun DashboardCombinedHeader(
     quietWindowUntilMs: Long = 0L,
     onQuietWindowClick: () -> Unit = {},
     // Слот под карточкой сахара: сюда экран кладёт показатели («Сегодня», TIR и т. д.)
+    part: DashboardHeaderPart = DashboardHeaderPart.All,
     belowHero: (@Composable () -> Unit)? = null
 ) {
+    val statsToggleLabel = stringResource(R.string.dashboard_toggle_statistics)
     // Determine Colors based on logic
     // Glucose: primary tonal surface with a very light range tint when fresh data is out of range.
     val glucoseBaseContainerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -590,7 +597,9 @@ fun DashboardCombinedHeader(
                     AdaptiveContentWidthClass.Medium -> 38.dp
                     AdaptiveContentWidthClass.Expanded -> 42.dp
                 } * heroMultiSensorScale)
-                val resolvedClusterGap = if (heroWidthClass == AdaptiveContentWidthClass.Compact) 8.dp else 12.dp
+                // Keep the trend visually attached to the glucose value. The chart behind the
+                // cluster already provides separation, so a wide empty gutter reads as a split.
+                val resolvedClusterGap = if (heroWidthClass == AdaptiveContentWidthClass.Compact) 2.dp else 4.dp
                 val primaryValueStyle = fullPrimaryStyle.scaleForHero(heroMultiSensorScale)
                 val singleDeltaFits = singleValue && heroDeltaText?.let { delta ->
                     val primaryWidth = heroTextMeasurer.measure(primaryText, style = primaryValueStyle, maxLines = 1).size.width
@@ -655,6 +664,7 @@ fun DashboardCombinedHeader(
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
+                            .clickable(onClick = onHeroClick)
                             .padding(
                                 start = resolvedStartPadding,
                                 end = resolvedEndPadding,
@@ -822,7 +832,11 @@ fun DashboardCombinedHeader(
                             HeroDeltaMini(stringResource(R.string.hero_delta_5m), heroDelta5, glucoseContentColor)
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 22.dp),
+                            modifier = Modifier.wrapContentWidth().padding(start = 22.dp)
+                                .clickable(onClick = onHeroClick)
+                                .semantics { contentDescription = statsToggleLabel }
+                                .onGloballyPositioned { DashboardLayout.anchors["glucose"] = it.boundsInRoot() }
+                                .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ) {
@@ -911,7 +925,7 @@ fun DashboardCombinedHeader(
         if (statusCopy == null) {
             Card(
                 onClick = onHeroClick,
-                modifier = stabilizedModifier,
+                modifier = stabilizedModifier.semantics { contentDescription = statsToggleLabel },
                 colors = heroColors,
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
@@ -921,7 +935,10 @@ fun DashboardCombinedHeader(
             }
         } else {
             Card(
-                modifier = stabilizedModifier,
+                onClick = onHeroClick,
+                modifier = stabilizedModifier
+                    .semantics { contentDescription = statsToggleLabel }
+                    .onGloballyPositioned { DashboardLayout.anchors["glucose"] = it.boundsInRoot() },
                 colors = heroColors,
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
@@ -1150,13 +1167,13 @@ fun DashboardCombinedHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            heroCard(Modifier.fillMaxWidth())
-            sensorCard(Modifier.fillMaxWidth())
+            if (part != DashboardHeaderPart.Sensor) heroCard(Modifier.fillMaxWidth())
+            if (part != DashboardHeaderPart.Glucose) sensorCard(Modifier.fillMaxWidth())
         }
     } else {
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SensorPillsRow(activePill)
-            heroCard(Modifier.fillMaxWidth())
+            if (part != DashboardHeaderPart.Glucose) SensorPillsRow(activePill)
+            if (part != DashboardHeaderPart.Sensor) heroCard(Modifier.fillMaxWidth())
             belowHero?.invoke()
         }
     }
@@ -1344,6 +1361,7 @@ private fun HeroBigChart(
     onLeftTap: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val chartToggleLabel = stringResource(R.string.dashboard_toggle_chart)
     val windowMs = windowHours * 3_600_000L
     val newest = history.lastOrNull()?.timestamp ?: return
     val maxOffset = heroMaxOffset(history, windowMs)
@@ -1352,19 +1370,27 @@ private fun HeroBigChart(
     val points = remember(history, start, end) { history.filter { it.timestamp in start..end && it.value > 0f } }
     val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val currentTap by androidx.compose.runtime.rememberUpdatedState(onTap)
+    val currentLeftTap by androidx.compose.runtime.rememberUpdatedState(onLeftTap)
+    val currentOnOffset by androidx.compose.runtime.rememberUpdatedState(onOffset)
     val currentOffset by androidx.compose.runtime.rememberUpdatedState(offsetMs)
     val (scaleLo, scaleSpan) = remember(points, isMmol) { heroScale(points, isMmol) }
     val labelColor = textColor.copy(alpha = 0.75f).toArgb()
     Box(
         modifier = modifier
-            .pointerInput(Unit) { detectTapGestures { if (it.x > size.width * 0.5f) onTap() else onLeftTap() } }
+            .semantics { contentDescription = chartToggleLabel }
+            .onGloballyPositioned {
+                val bounds = it.boundsInRoot()
+                DashboardLayout.anchors["chart"] = bounds.copy(left = bounds.left + bounds.width * 0.60f)
+            }
+            .pointerInput(Unit) { detectTapGestures { if (it.x > size.width * 0.60f) currentTap() else currentLeftTap() } }
             .pointerInput(maxOffset, windowMs) {
                 detectHorizontalDragGestures { change, dx ->
                     change.consume()
                     val old = currentOffset
                     val new = (old + (dx / size.width.coerceAtLeast(1) * windowMs).toLong()).coerceIn(0L, maxOffset)
                     if (new / (windowMs / 12) != old / (windowMs / 12)) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                    onOffset(new)
+                    currentOnOffset(new)
                 }
             }
     ) {
@@ -1376,8 +1402,8 @@ private fun HeroBigChart(
                     drawRect(
                         brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
                             0f to Color.Black.copy(alpha = 0.05f),
-                            0.58f to Color.Black.copy(alpha = 0.05f),
-                            0.8f to Color.Black.copy(alpha = 1f),
+                            0.42f to Color.Black.copy(alpha = 0.05f),
+                            0.56f to Color.Black.copy(alpha = 1f),
                             1f to Color.Black.copy(alpha = 1f)
                         ),
                         blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
@@ -2076,7 +2102,7 @@ fun RecentReadingsCard(
         // replayed missed rows and were removed on the very next recomposition.
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             // User Request: "readings row card 2 bottom edges 4dp radius"
             // Top: 16dp (Standard), Bottom: 4dp (Continuity)
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
@@ -2090,10 +2116,6 @@ fun RecentReadingsCard(
                     }
                 }
                 if (onViewHistory != null) {
-                    HorizontalDivider(
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -197,8 +197,11 @@
             android:foregroundServiceType="connectedDevice" />
 
         <!-- IPC v1: ru.solmi.sensor.data (новый) и com.gismonitor.data (совместимость). Доступ только для приложений с той же подписью. -->
+        <!-- Reading is authorized inside GisBridge against the caller package. This keeps the
+             bridge usable by the separately signed ru.solmi.app without exposing CGM data to
+             arbitrary apps. Writes remain protected by the signature permission. -->
         <provider android:name="tk.glucodata.GisBridge" android:authorities="ru.solmi.sensor.data;com.gismonitor.data" android:exported="true"
-            android:readPermission="ru.solmi.permission.SENSOR_DATA" android:writePermission="ru.solmi.permission.SENSOR_DATA" />
+            android:writePermission="ru.solmi.permission.SENSOR_DATA" />
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

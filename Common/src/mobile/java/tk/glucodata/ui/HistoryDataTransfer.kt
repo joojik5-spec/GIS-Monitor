@@ -211,7 +211,7 @@ fun HistoryExportSheet(
 
                 Button(
                     onClick = {
-                        val fileName = "GISMonitor_Export_${java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(System.currentTimeMillis())}.csv"
+                        val fileName = "SolmiSensor_Export_${java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(System.currentTimeMillis())}.csv"
                         csvLauncher.launch(fileName)
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -228,7 +228,7 @@ fun HistoryExportSheet(
 
                 OutlinedButton(
                     onClick = {
-                        val fileName = "GISMonitor_Report_${java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(System.currentTimeMillis())}.txt"
+                        val fileName = "SolmiSensor_Report_${java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(System.currentTimeMillis())}.txt"
                         textLauncher.launch(fileName)
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -530,7 +530,7 @@ fun ExportDataSettingsSheet(
         pendingCsvRequest = request
         val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
             .format(System.currentTimeMillis())
-        csvLauncher.launch("GISMonitor_Export_$date.csv")
+        csvLauncher.launch("SolmiSensor_Export_$date.csv")
     }
 
     fun exportReadableReport() {

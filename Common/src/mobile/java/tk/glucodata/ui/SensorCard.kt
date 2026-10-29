@@ -564,7 +564,7 @@ fun SensorCard(
                             val safeId = sensor.serial.filter(Char::isLetterOrDigit)
                                 .ifBlank { "CT5" }
                             anytimeCredentialExportLauncher.launch(
-                                "GISMonitor-Anytime-$safeId.json"
+                                "SolmiSensor-Anytime-$safeId.json"
                             )
                         }
                     },
@@ -1685,7 +1685,7 @@ fun SensorCard(
                             pendingAiDexKeyBackup = payload
                             val bareSerial = tk.glucodata.drivers.aidex.native.protocol.AiDexPairKeyBackup
                                 .canonicalBareSerial(sensor.serial)
-                            aiDexKeyExportLauncher.launch("GISMonitor-AiDex-$bareSerial.aidexkey")
+                            aiDexKeyExportLauncher.launch("SolmiSensor-AiDex-$bareSerial.aidexkey")
                         }
                     },
                     shapes = ButtonDefaults.shapes(),
@@ -2307,7 +2307,7 @@ fun SensorCard(
                         if (sensor.vendorModel.isNotEmpty()) {
                             DataRow(stringResource(R.string.model), sensor.vendorModel)
                         }
-                        if (sensor.sensorDetailTelemetry.isNotBlank()) {
+                        if (connectionLogExpanded && sensor.sensorDetailTelemetry.isNotBlank()) {
                             DataRow(stringResource(R.string.anytime_sensor_telemetry), sensor.sensorDetailTelemetry)
                         }
                         if (sensor.vendorFirmware.isNotEmpty()) {
@@ -2377,7 +2377,7 @@ fun SensorCard(
                     ) {
                         // The taller header already spaces the log off the rows above, so the
                         // gap that matters is the one under it -- and Copy/Share bring their own.
-                        Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp)) {
+                        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp)) {
                             SensorTraceLog(sensor)
                         }
                     }

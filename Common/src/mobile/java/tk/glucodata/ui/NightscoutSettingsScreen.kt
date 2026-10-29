@@ -834,7 +834,7 @@ fun NightscoutSettingsScreen(navController: NavController) {
                                 if (it) Natives.wakeuploader()
                             },
                             icon = Icons.Default.Medication,
-                            iconTint = MaterialTheme.colorScheme.tertiary,
+                            iconTint = MaterialTheme.colorScheme.primary,
                             enabled = isActive && sendTreatments,
                             position = CardPosition.MIDDLE
                         )
@@ -847,7 +847,7 @@ fun NightscoutSettingsScreen(navController: NavController) {
                                 JournalTreatmentUploader.setReceiveTreatments(it)
                             },
                             icon = Icons.Default.Link,
-                            iconTint = MaterialTheme.colorScheme.secondary,
+                            iconTint = MaterialTheme.colorScheme.primary,
                             enabled = isActive,
                             position = CardPosition.MIDDLE
                         )
@@ -861,7 +861,7 @@ fun NightscoutSettingsScreen(navController: NavController) {
                                 if (it) Natives.wakeuploader()
                             },
                             icon = Icons.Default.CloudUpload,
-                            iconTint = MaterialTheme.colorScheme.secondary,
+                            iconTint = MaterialTheme.colorScheme.primary,
                             enabled = isActive,
                             position = CardPosition.MIDDLE
                         )
@@ -874,7 +874,7 @@ fun NightscoutSettingsScreen(navController: NavController) {
                                 testState = TestState.Idle
                             },
                             icon = Icons.Default.Api,
-                            iconTint = MaterialTheme.colorScheme.secondary,
+                            iconTint = MaterialTheme.colorScheme.primary,
                             enabled = isActive,
                             position = CardPosition.BOTTOM
                         )
@@ -942,7 +942,7 @@ fun NightscoutSettingsScreen(navController: NavController) {
                             testState = TestState.Idle
                         },
                         icon = Icons.Default.Science,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         enabled = isActive,
                         position = CardPosition.SINGLE
                     )

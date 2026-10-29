@@ -57,7 +57,8 @@ private fun jugglucoBrandFamily(weight: Int, width: Float): FontFamily {
 @Composable
 fun SensorSelectionCards(
     onSensorSelected: (SensorType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    preferredTypes: Set<SensorType> = emptySet(),
 ) {
     val compact = rememberAdaptiveWindowMetrics().isCompact
     val horizontalPadding = 0.dp
@@ -79,7 +80,26 @@ fun SensorSelectionCards(
             verticalArrangement = Arrangement.spacedBy(cardGap) // Generous spacing (M3 Expressive)
         ) {
 
-            sensorTypeOptions.forEach { option ->
+            val orderedOptions = remember(preferredTypes) {
+                val byType = sensorTypeOptions.associateBy { it.type }
+                sensorCatalogOrder(sensorTypeOptions.map { it.type }, preferredTypes)
+                    .mapNotNull(byType::get)
+            }
+            val featuredTypes = sensorCatalogFeaturedTypes(
+                orderedOptions.map { it.type },
+                preferredTypes,
+            ).toSet()
+            Text(
+                text = stringResource(
+                    if (preferredTypes.isEmpty()) R.string.sensor_popular_models
+                    else R.string.sensor_recognized_models
+                ),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+            )
+
+            orderedOptions.filter { it.type in featuredTypes }.forEach { option ->
                 val highlighted = option.type == SensorType.SIBIONICS
                 SensorCard(
                     icon = option.icon,
@@ -91,9 +111,49 @@ fun SensorSelectionCards(
                     compact = compact
                 )
             }
+
+            val remaining = orderedOptions.filterNot { it.type in featuredTypes }
+            remaining.forEach { option ->
+                SensorCard(
+                    icon = option.icon,
+                    title = stringResource(option.titleRes),
+                    subtitle = stringResource(option.subtitleRes),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    onClick = { onSensorSelected(option.type) },
+                    compact = compact,
+                )
+            }
         }
     }
 }
+
+internal val popularSensorTypes = listOf(
+    SensorType.LIBRE,
+    SensorType.DEXCOM,
+    SensorType.SIBIONICS,
+    SensorType.AIDEX,
+)
+
+/** Stable UI-only ordering: detected families, then common choices, then the full catalogue. */
+internal fun sensorCatalogOrder(
+    available: List<SensorType>,
+    preferred: Set<SensorType> = emptySet(),
+): List<SensorType> {
+    val priority = (preferred.toList() + popularSensorTypes).distinct()
+    return available.withIndex()
+        .sortedWith(
+            compareBy<IndexedValue<SensorType>> {
+                priority.indexOf(it.value).let { index -> if (index < 0) Int.MAX_VALUE else index }
+            }.thenBy { it.index }
+        )
+        .map { it.value }
+}
+
+internal fun sensorCatalogFeaturedTypes(
+    ordered: List<SensorType>,
+    preferred: Set<SensorType> = emptySet(),
+): List<SensorType> = ordered.filter { it in preferred || it in popularSensorTypes }
 
 /**
  * Individual sensor type card with M3 Expressive styling.

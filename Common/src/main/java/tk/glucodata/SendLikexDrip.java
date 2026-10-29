@@ -77,7 +77,6 @@ public static  void setreceivers() {
     names=Natives.xdripRecepters();
     }
 static void broadcastglucose(ExchangeGlucosePayload payload,long sensorStartmsec) {
-    GisBridge.publishPayload(payload,sensorStartmsec);
     if(names==null)
         return;
     {

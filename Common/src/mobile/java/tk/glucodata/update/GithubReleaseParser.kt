@@ -109,11 +109,14 @@ object GithubReleaseParser {
             for (i in 0 until array.length()) {
                 val entry = array.optJSONObject(i) ?: continue
                 val applicationId = entry.optString("applicationId").takeIf { it.isNotBlank() } ?: continue
-                val file = entry.optString("file").takeIf { it.isNotBlank() } ?: continue
+                val file = entry.optString("file").takeIf(UpdateArtifacts::isSafeFileName) ?: continue
+                val sha256 = entry.optString("sha256")
+                    .takeIf { it.matches(Regex("^[0-9A-Fa-f]{64}$")) }
+                    ?.lowercase()
                 artifacts[applicationId] = ManifestArtifact(
                     fileName = file,
                     sizeBytes = entry.optLong("size", 0L),
-                    sha256 = entry.optString("sha256").takeIf { it.length == 64 }?.lowercase(),
+                    sha256 = sha256,
                     url = entry.optString("url").takeIf { it.isNotBlank() && it != "null" }
                 )
             }

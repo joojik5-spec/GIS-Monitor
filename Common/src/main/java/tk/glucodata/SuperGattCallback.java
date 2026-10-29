@@ -904,7 +904,8 @@ public abstract class SuperGattCallback extends BluetoothGattCallback {
         final boolean dexcomShareEnabled = !isWearable && DexcomShareSettings.isEnabled(app);
         final boolean loopFeedEnabled = Natives.getxbroadcast() || (!isWearable && Natives.getlibrelinkused());
         final boolean shouldResolveExchangePayload =
-                Natives.getJugglucobroadcast()
+                GisBridge.shareEnabled(app)
+                || Natives.getJugglucobroadcast()
                 || outboundApiEnabled
                 || dexcomShareEnabled
                 || (shouldBroadcastMinuteUpdate && (
@@ -914,6 +915,10 @@ public abstract class SuperGattCallback extends BluetoothGattCallback {
         final ExchangeGlucosePayload exchangePayload = shouldResolveExchangePayload
                 ? ExchangeGlucosePayload.resolve(SerialNumber, gl, rate, timmsec, sensorgen, primaryText)
                 : null;
+        // Solmi is a first-party local consumer, not an xDrip receiver. Publishing here keeps
+        // its provider current even when the optional xDrip broadcast is disabled.
+        if (exchangePayload != null)
+            GisBridge.publishPayload(exchangePayload, sensorstartmsec);
         // "Collapse into chunks" thins how often every exchange destination is fed, including the
         // xDrip/xInfuus loop feed AAPS doses from. The payload is always the newest reading under
         // its own timestamp, never the last point of a completed chunk (see ExchangeUpdateGate).

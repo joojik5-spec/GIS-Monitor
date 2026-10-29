@@ -164,7 +164,7 @@ fun WatchSettingsScreen(navController: NavController) {
                         title = "Watchdrip",
                         checked = watchdripEnabled,
                         icon = Icons.Filled.Watch,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.TOP,
                         onCheckedChange = {
                             watchdripEnabled = it
@@ -177,7 +177,7 @@ fun WatchSettingsScreen(navController: NavController) {
                         title = "GadgetBridge",
                         checked = gadgetBridgeEnabled,
                         icon = Icons.Filled.Hub,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.MIDDLE,
                         onCheckedChange = {
                             gadgetBridgeEnabled = it
@@ -192,7 +192,7 @@ fun WatchSettingsScreen(navController: NavController) {
                         title = stringResource(R.string.notify),
                         checked = notifyEnabled,
                         icon = Icons.Filled.NotificationImportant,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.MIDDLE,
                         onCheckedChange = {
                             notifyEnabled = it
@@ -203,7 +203,7 @@ fun WatchSettingsScreen(navController: NavController) {
                         title = stringResource(R.string.separate),
                         checked = separateEnabled,
                         icon = Icons.Filled.Devices,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.BOTTOM,
                         onCheckedChange = {
                             separateEnabled = it
@@ -268,7 +268,7 @@ fun WatchSettingsScreen(navController: NavController) {
                         subtitle = stringResource(R.string.watch_kerfstok_bridge),
                         checked = kerfstokEnabled,
                         icon = Icons.Filled.CheckCircle,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.TOP,
                         onCheckedChange = { enabled ->
                             if (WatchInterop.setKerfstokEnabled(context, enabled)) {
@@ -286,7 +286,7 @@ fun WatchSettingsScreen(navController: NavController) {
                             stringResource(R.string.watch_garmin_enable_hint)
                         },
                         icon = Icons.Filled.Link,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.BOTTOM,
                         modifier = Modifier.alpha(if (garminStatusEnabled) 1f else 0.55f),
                         onClick = if (garminStatusEnabled) {
@@ -491,7 +491,7 @@ fun WearOsConfigScreen(navController: NavController) {
                         title = stringResource(R.string.watch_none_found),
                         subtitle = stringResource(R.string.watch_none_found_hint),
                         icon = Icons.Filled.BluetoothSearching,
-                        iconTint = MaterialTheme.colorScheme.tertiary
+                        iconTint = MaterialTheme.colorScheme.primary
                     )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -572,7 +572,7 @@ fun WearOsConfigScreen(navController: NavController) {
                             stringResource(R.string.wear_auto_sensor_switch_off_desc)
                         },
                         icon = Icons.Filled.SwapHoriz,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.TOP,
                         onClick = if (selected != null && canSetDirect) {
                             { updateAutoSwitch(!autoSwitch) }
@@ -801,21 +801,21 @@ fun GarminStatusScreen(navController: NavController) {
                         title = stringResource(R.string.garmin_last_send),
                         subtitle = "${formatEpoch(snapshot.sendTimeMs, stringResource(R.string.never))} · ${snapshot.sendStatus}",
                         icon = Icons.Filled.Sync,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.MIDDLE
                     )
                     SettingsItem(
                         title = stringResource(R.string.garmin_last_received),
                         subtitle = formatEpoch(snapshot.receivedTimeMs, stringResource(R.string.never)),
                         icon = Icons.Filled.CheckCircle,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.MIDDLE
                     )
                     SettingsItem(
                         title = stringResource(R.string.garmin_queued_messages),
                         subtitle = if (snapshot.waitingQueue) stringResource(R.string.garmin_queue_waiting) else stringResource(R.string.garmin_queue_empty),
                         icon = Icons.Filled.Hub,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.BOTTOM
                     )
                 }
@@ -1266,7 +1266,7 @@ fun WebServerSettingsScreen(navController: NavController) {
                         subtitle = stringResource(R.string.webserver_local_only_desc),
                         checked = localOnly,
                         icon = Icons.Filled.Devices,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.TOP,
                         enabled = childEnabled,
                         onCheckedChange = {
@@ -1278,7 +1278,7 @@ fun WebServerSettingsScreen(navController: NavController) {
                     SettingsItem(
                         title = stringResource(R.string.port),
                         icon = Icons.Filled.SettingsEthernet,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         position = CardPosition.MIDDLE,
                         trailingContent = {
                             OutlinedTextField(

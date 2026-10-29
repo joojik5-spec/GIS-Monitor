@@ -55,6 +55,10 @@ object UpdateDownloader {
         if (!UpdateSourceClient.isDownloadableUrl(update.artifact.downloadUrl)) {
             return@withContext Outcome.Failed(UpdateError.NO_ARTIFACT)
         }
+        if (!UpdateArtifacts.isSafeFileName(update.artifact.fileName)) {
+            Log.w(LOG_TAG, "update artifact has an unsafe file name")
+            return@withContext Outcome.Failed(UpdateError.NO_ARTIFACT)
+        }
 
         val dir = downloadDir(context)
         clearStaged(context)
@@ -97,6 +101,7 @@ object UpdateDownloader {
                         if (read <= 0) break
                         written += read
                         if (written > MAX_APK_BYTES) {
+                            target.delete()
                             return@withContext Outcome.Failed(UpdateError.STORAGE)
                         }
                         digest.update(buffer, 0, read)

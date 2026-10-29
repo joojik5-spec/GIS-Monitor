@@ -2,6 +2,7 @@ package tk.glucodata.update
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,6 +12,23 @@ import org.junit.Test
  * decides where the app goes looking for an APK. Worth pinning down.
  */
 class UpdateSourceTests {
+
+    @Test
+    fun `manifest rejects file paths and malformed digests`() {
+        val manifest = """
+            {"schema":1,"versionName":"1.2.0","versionCode":1011,"artifacts":[{
+              "applicationId":"tk.glucodata.ng","file":"safe.apk","size":3,
+              "sha256":"${"a".repeat(64)}","url":"safe.apk"
+            }]}
+        """.trimIndent()
+        val traversal = manifest.replace("safe.apk", "../shared_prefs/app.xml")
+        assertNull(GithubReleaseParser.parseManifest(traversal))
+
+        val malformedDigest = manifest.replace("${"a".repeat(64)}", "${"z".repeat(64)}")
+        val parsed = GithubReleaseParser.parseManifest(malformedDigest)
+        assertNotNull(parsed)
+        assertNull(parsed!!.artifacts["tk.glucodata.ng"]!!.sha256)
+    }
 
     @Test
     fun `a github project url becomes that project's releases api`() {

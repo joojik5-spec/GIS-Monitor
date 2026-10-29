@@ -49,10 +49,21 @@ fun CalibrationSchoolScreen(
     val unitValue by dashboardViewModel.unit.collectAsStateWithLifecycle()
     val viewModeValue by dashboardViewModel.viewMode.collectAsStateWithLifecycle()
     val isMmolNow = tk.glucodata.ui.util.GlucoseFormatter.isMmol(unitValue)
-    val velocity = androidx.compose.runtime.remember(history, isMmolNow, viewModeValue) {
-        tk.glucodata.logic.TrendEngine.calculateTrend(history, useRaw = viewModeValue == 1 || viewModeValue == 3, isMmol = isMmolNow).velocity
+    val trend = androidx.compose.runtime.remember(history, isMmolNow, viewModeValue) {
+        tk.glucodata.logic.TrendEngine.calculateTrend(history, useRaw = viewModeValue == 1 || viewModeValue == 3, isMmol = isMmolNow)
     }
-    val unstable = Math.abs(velocity) >= 1.0f
+    val stableFor15Minutes = androidx.compose.runtime.remember(history, isMmolNow, viewModeValue) {
+        val cutoff = System.currentTimeMillis() - 15 * 60_000L
+        val recent = history.filter { it.timestamp >= cutoff && it.value > 0f }
+        val coversWindow = recent.size >= 2 &&
+            (recent.maxOfOrNull { it.timestamp } ?: 0L) - (recent.minOfOrNull { it.timestamp } ?: 0L) >= 12 * 60_000L
+        coversWindow && tk.glucodata.logic.TrendEngine.calculateTrend(
+            recent,
+            useRaw = viewModeValue == 1 || viewModeValue == 3,
+            isMmol = isMmolNow,
+        ).state == tk.glucodata.logic.TrendEngine.TrendState.Flat
+    }
+    val unstable = trend.state != tk.glucodata.logic.TrendEngine.TrendState.Flat || !stableFor15Minutes
     // Шум датчика: средний разброс точек последних 30 минут вокруг сглаженной линии (в единицах экрана).
     // Спокойный датчик можно калибровать в любое время после прогрева (первые 2 часа), 48 часов ждать не нужно.
     val noisy = androidx.compose.runtime.remember(history, isMmolNow) {
@@ -72,16 +83,15 @@ fun CalibrationSchoolScreen(
         hours < 2 -> ctx.getString(tk.glucodata.R.string.cal_no_title) to ctx.getString(tk.glucodata.R.string.cal_warm_text, Math.round(hours).toInt(), Math.ceil(2 - hours).toInt())
         noisy -> ctx.getString(tk.glucodata.R.string.cal_wait_title) to ctx.getString(tk.glucodata.R.string.cal_noisy_text)
         stale -> ctx.getString(tk.glucodata.R.string.cal_no_fresh_title) to ctx.getString(tk.glucodata.R.string.cal_no_fresh_text)
-        unstable -> ctx.getString(tk.glucodata.R.string.cal_unstable_title) to ctx.getString(if (velocity > 0) tk.glucodata.R.string.cal_unstable_up else tk.glucodata.R.string.cal_unstable_down)
+        unstable -> ctx.getString(tk.glucodata.R.string.cal_unstable_title) to ctx.getString(if (trend.velocity > 0) tk.glucodata.R.string.cal_unstable_up else tk.glucodata.R.string.cal_unstable_down)
         else -> ctx.getString(tk.glucodata.R.string.cal_ok_title) to ctx.getString(tk.glucodata.R.string.cal_ok_text)
     }
     val ok = (hours >= 2 || hours < 0 && sp0.contains("ts")) && !stale && !unstable && !noisy
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(tk.glucodata.ui.components.TabScreenDefaults.contentPadding()),
+        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(tk.glucodata.ui.components.TabScreenDefaults.contentPadding()),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        tk.glucodata.ui.components.TabScreenHeader(title = ctx.getString(tk.glucodata.R.string.nav_calibration))
         val sp = ctx.getSharedPreferences("gis_bridge", Context.MODE_PRIVATE)
         // Сырое и итоговое значение берём из тех же данных, что и главный экран (после обработки алгоритмом датчика)
         val lastPt = history.lastOrNull { it.value > 0f }
@@ -110,7 +120,6 @@ fun CalibrationSchoolScreen(
             val arrow = when { trendNow >= 2 -> "\u2191"; trendNow == 1 -> "\u2197"; trendNow == 0 -> "\u2192"; trendNow == -1 -> "\u2198"; else -> "\u2193" }
             Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(ctx.getString(tk.glucodata.R.string.nav_calibration), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -125,8 +134,8 @@ fun CalibrationSchoolScreen(
                         }
                         // Справа: полезное для калибровки — возраст датчика, число ваших калибровок и готовность
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (hours >= 0) Text(ctx.getString(tk.glucodata.R.string.pill_hours_short, Math.round(hours).toInt()), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("${userCals.size} \u00d7 \u2713", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (hours >= 0) Text(ctx.getString(tk.glucodata.R.string.cal_sensor_age, Math.round(hours).toInt()), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            Text(ctx.getString(tk.glucodata.R.string.cal_saved_count, userCals.size), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 title, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
                                 color = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
@@ -141,7 +150,6 @@ fun CalibrationSchoolScreen(
         // 3. Калибровка: ввод прямо на экране
         Card(shape = cardShape, border = cardBorder, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (raw <= 0) Text(ctx.getString(tk.glucodata.R.string.nav_calibration), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(ctx.getString(tk.glucodata.R.string.cal_compare), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 MeterPhotoButton(onTriggerCalibration)
                 val whenMs = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) } // null = «сейчас»
@@ -149,7 +157,7 @@ fun CalibrationSchoolScreen(
                 val nowMs = System.currentTimeMillis()
                 val shownMs = whenMs.value ?: nowMs
                 fun cal() = java.util.Calendar.getInstance().apply { timeInMillis = shownMs }
-                fun setTime(ms: Long) { whenMs.value = ms.coerceIn(nowMs - 7L * 86_400_000L, nowMs) }
+                fun setTime(ms: Long) { whenMs.value = ms.coerceIn(nowMs - 5 * 60_000L, nowMs) }
                 Surface(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -176,6 +184,11 @@ fun CalibrationSchoolScreen(
                         }
                     }
                 }
+                Text(
+                    ctx.getString(tk.glucodata.R.string.cal_time_explainer),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 val step = if (mmol) 0.1f else 1f
                 val entry = androidx.compose.runtime.remember {
                     androidx.compose.runtime.mutableStateOf(if (raw > 0) (Math.round(((cal ?: raw) / k) * 10.0) / 10.0).toFloat() else 0f)

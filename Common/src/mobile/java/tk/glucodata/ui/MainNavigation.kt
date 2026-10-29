@@ -131,6 +131,7 @@ private fun DashboardRoute(
         calibrations = calibrations,
         onNavigateToCalibrations = { navController.navigate("calibrations") },
         onNavigateToHistory = { navController.navigate("history") },
+        onNavigateToStatistics = { navController.navigate("stats") },
         onNavigateToMqAccount = { navController.navigate("settings/mq-account") },
         onNavigateToReadiness = { navController.navigate("settings/cgm-readiness") },
         onNavigateToAppUpdates = { navController.navigate("settings/app-updates") },
@@ -714,6 +715,7 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
     }
     val navigationTapCatcher = remember { NavigationTapCatcher() }
     val context = LocalContext.current
+    LaunchedEffect(context) { DashboardLayout.load(context); DashboardExpandedPanelState.load(context) }
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -793,7 +795,7 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
         route == null -> null
         route.startsWith("settings/") -> "settings"
         route.startsWith("sensors/") -> "sensors"
-        route == "history" || route == "sensors" -> "dashboard"
+        route == "history" || route == "stats" || route == "sensors" -> "dashboard"
         route == "journal" -> "journal"
         route == "calibrations" || route.startsWith("calibrations/") -> "dashboard"
         else -> null
@@ -814,7 +816,11 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
             }
             // Already on the destination. Tapping the tab you are already on is how people
             // back out of a mode, so let it close Arrange rather than doing nothing.
-            else -> tk.glucodata.ui.stats.StatsArrangeMode.close()
+            else -> {
+                DashboardExpandedPanelState.close()
+                DashboardLayout.returnToGlucose++
+                tk.glucodata.ui.stats.StatsArrangeMode.close()
+            }
         }
     }
 
@@ -825,7 +831,7 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
         add(NavItem("school", androidx.compose.ui.res.stringResource(R.string.nav_calibration), Icons.Filled.EditNote, Icons.Outlined.EditNote))
         add(NavItem("sensors", androidx.compose.ui.res.stringResource(R.string.nav_sensors), androidx.compose.material.icons.Icons.Filled.Sensors, androidx.compose.material.icons.Icons.Outlined.Sensors))
         add(NavItem("settings", androidx.compose.ui.res.stringResource(R.string.nav_settings), Icons.Filled.Settings, Icons.Outlined.Settings))
-    }
+    }.sortedBy { DashboardLayout.navigation.indexOf(it.route) }
 
     // One NavHost in one place for both orientations. Rotation is handled by this activity
     // (configChanges), so the composition survives it; two NavHosts — one beside a rail, one
@@ -867,6 +873,7 @@ fun MainApp(themeMode: ThemeMode, onThemeChanged: (ThemeMode) -> Unit) {
                                 androidx.compose.foundation.layout.Column(
                                     modifier = Modifier
                                         .weight(1f)
+                                        .then(navigationButtonDrag(item.route))
                                         .fillMaxHeight()
                                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(29.dp))
                                         .background(pill)
@@ -1008,7 +1015,8 @@ private fun NavGraphBuilder.appDestinations(
             onNavigateToReadiness = { navController.navigate("settings/cgm-readiness") }
         )
     }
-    composable("settings") { ExpressiveSettingsScreen(navController, themeMode, onThemeChanged, dashboardViewModel) }
+    composable("settings") { SolmiSettingsHubScreen(navController, themeMode, onThemeChanged, dashboardViewModel) }
+    composable("settings/all") { ExpressiveSettingsScreen(navController, themeMode, onThemeChanged, dashboardViewModel) }
     composable("settings/nightscout") { NightscoutSettingsScreen(navController) }
     composable("settings/libreview") { LibreViewSettingsScreen(navController) }
     composable("settings/mq-account") { MQAccountSettingsScreen(navController) }

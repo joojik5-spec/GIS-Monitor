@@ -30,7 +30,6 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.material3.Slider
 import tk.glucodata.ui.components.TabScreenDefaults
-import tk.glucodata.ui.components.TabScreenHeader
 import tk.glucodata.ui.components.StyledSwitch
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -246,6 +245,39 @@ private fun String.capitalize(): String {
     return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
 }
 
+/** Presentation-only ordering. The source list and all sensor state remain untouched. */
+internal fun <T> activeSensorsFirst(
+    sensors: List<T>,
+    isActive: (T) -> Boolean,
+    isStreaming: (T) -> Boolean,
+): List<T> = sensors.withIndex()
+    .sortedWith(
+        compareByDescending<IndexedValue<T>> { isActive(it.value) }
+            .thenByDescending { isStreaming(it.value) }
+            .thenBy { it.index }
+    )
+    .map { it.value }
+
+internal fun pickerTypeForSensor(type: tk.glucodata.SensorTypeName): tk.glucodata.ui.components.SensorType? =
+    when (type) {
+        tk.glucodata.SensorTypeName.LIBRE_2,
+        tk.glucodata.SensorTypeName.LIBRE_3 -> tk.glucodata.ui.components.SensorType.LIBRE
+        tk.glucodata.SensorTypeName.SIBIONICS_GS1,
+        tk.glucodata.SensorTypeName.SIBIONICS_2,
+        tk.glucodata.SensorTypeName.SIBIONICS_GS3 -> tk.glucodata.ui.components.SensorType.SIBIONICS
+        tk.glucodata.SensorTypeName.DEXCOM_G7 -> tk.glucodata.ui.components.SensorType.DEXCOM
+        tk.glucodata.SensorTypeName.ACCUCHEK_SMARTGUIDE -> tk.glucodata.ui.components.SensorType.ACCUCHEK
+        tk.glucodata.SensorTypeName.CARESENS_AIR -> tk.glucodata.ui.components.SensorType.CARESENS_AIR
+        tk.glucodata.SensorTypeName.AIDEX_LINX -> tk.glucodata.ui.components.SensorType.AIDEX
+        tk.glucodata.SensorTypeName.ICAN_I3 -> tk.glucodata.ui.components.SensorType.ICANHEALTH
+        tk.glucodata.SensorTypeName.MQ -> tk.glucodata.ui.components.SensorType.MQ
+        tk.glucodata.SensorTypeName.ANYTIME -> tk.glucodata.ui.components.SensorType.ANYTIME
+        tk.glucodata.SensorTypeName.OTTAI_CGM -> tk.glucodata.ui.components.SensorType.OTTAI
+        tk.glucodata.SensorTypeName.MEDTRUM_EASYSENSE -> tk.glucodata.ui.components.SensorType.MEDTRUM
+        tk.glucodata.SensorTypeName.NIGHTSCOUT,
+        tk.glucodata.SensorTypeName.UNKNOWN -> null
+    }
+
 @Composable
 fun SensorScreen(
     onNavigateToMqAccount: () -> Unit = {},
@@ -279,7 +311,6 @@ fun SensorScreen(
     }
     
     // State for sensor type picker and wizards
-    var showSensorPicker by remember { mutableStateOf(false) }
     var showSibionicsWizard by remember { mutableStateOf(false) }
     var showLibreWizard by remember { mutableStateOf(false) }
     var showDexcomWizard by remember { mutableStateOf(false) }
@@ -292,27 +323,20 @@ fun SensorScreen(
     var showOttaiWizard by remember { mutableStateOf(false) }
     var showMedtrumWizard by remember { mutableStateOf(false) }
 
-    // Sensor Type Picker Bottom Sheet
-    if (showSensorPicker) {
-        tk.glucodata.ui.components.SensorTypePicker(
-            onDismiss = { showSensorPicker = false },
-            onSensorSelected = { type ->
-                showSensorPicker = false
-                when (type) {
-                    tk.glucodata.ui.components.SensorType.SIBIONICS -> showSibionicsWizard = true
-                    tk.glucodata.ui.components.SensorType.LIBRE -> showLibreWizard = true
-                    tk.glucodata.ui.components.SensorType.DEXCOM -> showDexcomWizard = true
-                    tk.glucodata.ui.components.SensorType.ACCUCHEK -> showAccuChekWizard = true
-                    tk.glucodata.ui.components.SensorType.CARESENS_AIR -> showCareSensAirWizard = true
-                    tk.glucodata.ui.components.SensorType.AIDEX -> showAiDexWizard = true
-                    tk.glucodata.ui.components.SensorType.ICANHEALTH -> showICanHealthWizard = true
-                    tk.glucodata.ui.components.SensorType.MQ -> showMQWizard = true
-                    tk.glucodata.ui.components.SensorType.ANYTIME -> showAnytimeWizard = true
-                    tk.glucodata.ui.components.SensorType.OTTAI -> showOttaiWizard = true
-                    tk.glucodata.ui.components.SensorType.MEDTRUM -> showMedtrumWizard = true
-                }
-            }
-        )
+    val selectSensorType: (tk.glucodata.ui.components.SensorType) -> Unit = { type ->
+        when (type) {
+            tk.glucodata.ui.components.SensorType.SIBIONICS -> showSibionicsWizard = true
+            tk.glucodata.ui.components.SensorType.LIBRE -> showLibreWizard = true
+            tk.glucodata.ui.components.SensorType.DEXCOM -> showDexcomWizard = true
+            tk.glucodata.ui.components.SensorType.ACCUCHEK -> showAccuChekWizard = true
+            tk.glucodata.ui.components.SensorType.CARESENS_AIR -> showCareSensAirWizard = true
+            tk.glucodata.ui.components.SensorType.AIDEX -> showAiDexWizard = true
+            tk.glucodata.ui.components.SensorType.ICANHEALTH -> showICanHealthWizard = true
+            tk.glucodata.ui.components.SensorType.MQ -> showMQWizard = true
+            tk.glucodata.ui.components.SensorType.ANYTIME -> showAnytimeWizard = true
+            tk.glucodata.ui.components.SensorType.OTTAI -> showOttaiWizard = true
+            tk.glucodata.ui.components.SensorType.MEDTRUM -> showMedtrumWizard = true
+        }
     }
 
     // Sibionics Setup Wizard (Full Screen)
@@ -474,34 +498,25 @@ fun SensorScreen(
                     .padding(bottom = TabScreenDefaults.BottomPadding)
             ) {
                 Spacer(modifier = Modifier.height(TabScreenDefaults.Gutter))
-                TabScreenHeader(title = stringResource(R.string.sensors_title))
                 SensorsCgmReadinessBanner(onOpenReadiness = onNavigateToReadiness)
                 Spacer(modifier = Modifier.height(panelPadding))
                 tk.glucodata.ui.components.SensorsEmptyState(
-                    onSensorSelected = { type ->
-                        when (type) {
-                            tk.glucodata.ui.components.SensorType.SIBIONICS -> showSibionicsWizard = true
-                            tk.glucodata.ui.components.SensorType.LIBRE -> showLibreWizard = true
-                            tk.glucodata.ui.components.SensorType.DEXCOM -> showDexcomWizard = true
-                            tk.glucodata.ui.components.SensorType.ACCUCHEK -> showAccuChekWizard = true
-                            tk.glucodata.ui.components.SensorType.CARESENS_AIR -> showCareSensAirWizard = true
-                            tk.glucodata.ui.components.SensorType.AIDEX -> showAiDexWizard = true
-                            tk.glucodata.ui.components.SensorType.ICANHEALTH -> showICanHealthWizard = true
-                            tk.glucodata.ui.components.SensorType.MQ -> showMQWizard = true
-                            tk.glucodata.ui.components.SensorType.ANYTIME -> showAnytimeWizard = true
-                            tk.glucodata.ui.components.SensorType.OTTAI -> showOttaiWizard = true
-                            tk.glucodata.ui.components.SensorType.MEDTRUM -> showMedtrumWizard = true
-                        }
-                    }
+                    onSensorSelected = selectSensorType,
                 )
                 Spacer(modifier = Modifier.height(panelPadding))
             }
         } else {
+            val orderedSensors = remember(sensors) {
+                activeSensorsFirst(sensors, { it.isActive }, { it.streaming })
+            }
+            val recognizedSensorTypes = remember(orderedSensors) {
+                orderedSensors.mapNotNull { pickerTypeForSensor(it.sensorType) }.toCollection(LinkedHashSet())
+            }
             // LazyColumn with header that scrolls
             val sensorListState = rememberLazyListState()
             val focusSerial = SensorPillHolder.focusSerial
-            LaunchedEffect(focusSerial, sensors.size) {
-                val idx = sensors.indexOfFirst { it.serial == focusSerial }
+            LaunchedEffect(focusSerial, orderedSensors.size) {
+                val idx = orderedSensors.indexOfFirst { it.serial == focusSerial }
                 if (idx >= 0) {
                     sensorListState.animateScrollToItem(idx + 2)
                     SensorPillHolder.focusSerial = null
@@ -513,22 +528,25 @@ fun SensorScreen(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 contentPadding = TabScreenDefaults.contentPadding(hasFab = false)
             ) {
-                // Scrollable header
-                item {
-                    TabScreenHeader(title = stringResource(R.string.sensors_title))
-                }
                 item {
                     SensorsCgmReadinessBanner(
                         modifier = Modifier.padding(bottom = panelPadding),
                         onOpenReadiness = onNavigateToReadiness
                     )
                 }
-                items(sensors, key = { it.serial }) { sensor ->
+                item {
+                    tk.glucodata.ui.components.SensorSelectionCards(
+                        onSensorSelected = selectSensorType,
+                        preferredTypes = recognizedSensorTypes,
+                        modifier = Modifier.padding(bottom = panelPadding),
+                    )
+                }
+                items(orderedSensors, key = { it.serial }) { sensor ->
                     FontScaleCap {
                         SensorCard(
                             sensor,
                             viewModel,
-                            sensorCount = sensors.size,
+                            sensorCount = orderedSensors.size,
                             onNavigateToMqAccount = onNavigateToMqAccount,
                         )
                     }

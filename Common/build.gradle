@@ -11,10 +11,10 @@ ext {
     // factor). Scheme originates on the wearos branch — keep the two in step.
     // CI passes -PgisBuild=<номер сборки>: каждый выпуск получает свой растущий номер
     gisBuild = (project.findProperty('gisBuild') ?: '0') as int
-    appVersionCode = 1025 + gisBuild
+    appVersionCode = 1300 + gisBuild
     // Base version, without the flavour/build-type suffix chain that gets appended
     // to versionName. Used for the APK filename so it stays readable.
-    appVersionName = gisBuild > 0 ? "1.2.5-GIS.${gisBuild}" : '1.2.5-GIS.0'
+    appVersionName = gisBuild > 0 ? "1.3.0-Solmi.${gisBuild}" : '1.3.0-Solmi.0'
 
     ndkver       = '29.0.14206865'
     CMAKEVERSION = '4.1.2'
@@ -96,8 +96,8 @@ android {
         buildConfigField 'String', 'BASE_VERSION_NAME', "\"$appVersionName\""
         // GitHub repo the in-app updater reads releases from. Forks change it here.
         // Канал обновлений Solmi Sensor: папка solmi-sensor/ в gis-updates (манифест читается напрямую).
-        buildConfigField 'String', 'UPDATE_CHANNEL', '"gis-updates/solmi-sensor"'
-        buildConfigField 'String', 'UPDATE_URL', '"https://raw.githubusercontent.com/joojik5-spec/gis-updates/solmi/solmi-sensor/update-manifest.json"'
+        buildConfigField 'String', 'UPDATE_CHANNEL', '"gis-updates/solmi-update"'
+        buildConfigField 'String', 'UPDATE_URL', '"https://raw.githubusercontent.com/joojik5-spec/gis-updates/solmi/solmi-update/update-manifest.json"'
 
         buildConfigField 'String', 'BUILD_TIME', 'new java.text.SimpleDateFormat("HH:mm:ss dd-MMM-yyyy").format(new java.util.Date(' + System.currentTimeMillis() + 'L))'
         buildConfigField 'int', 'isRelease', '0'

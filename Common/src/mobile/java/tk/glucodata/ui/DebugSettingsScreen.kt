@@ -140,7 +140,7 @@ private fun bleErrorHistoryText(): String =
 
 /** Short, non-identifying preamble so a shared log says which build it came from. */
 private fun reportHeader(): String = buildString {
-    append("# GIS Monitor ").append(BuildConfig.VERSION_NAME).append('\n')
+    append("# Solmi Sensor ").append(BuildConfig.VERSION_NAME).append('\n')
     append("# Android ").append(Build.VERSION.RELEASE)
         .append(" (SDK ").append(Build.VERSION.SDK_INT).append(")\n")
     append("# Device ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append('\n')

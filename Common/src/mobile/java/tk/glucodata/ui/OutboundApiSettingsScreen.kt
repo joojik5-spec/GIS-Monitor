@@ -275,7 +275,7 @@ fun OutboundApiSettingsScreen(navController: NavController) {
                     title = stringResource(R.string.api_source_settings_title),
                     subtitle = stringResource(R.string.api_source_desc),
                     icon = Icons.Filled.CloudDownload,
-                    iconTint = MaterialTheme.colorScheme.tertiary,
+                    iconTint = MaterialTheme.colorScheme.primary,
                     position = CardPosition.SINGLE,
                     onClick = { navController.navigate("settings/api-source") }
                 )

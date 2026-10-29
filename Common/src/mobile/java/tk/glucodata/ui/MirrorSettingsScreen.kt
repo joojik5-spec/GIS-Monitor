@@ -1296,7 +1296,7 @@ fun MirrorEditSheet(pos: Int, sheetState: SheetState, onDismiss: () -> Unit) {
                                 checked = autoDetect,
                                 onCheckedChange = { autoDetect = it },
                                 icon = Icons.Filled.Wifi,
-                                iconTint = MaterialTheme.colorScheme.tertiary,
+                                iconTint = MaterialTheme.colorScheme.primary,
                                 position = CardPosition.SINGLE
                             )
                         }
@@ -1376,13 +1376,13 @@ fun MirrorEditSheet(pos: Int, sheetState: SheetState, onDismiss: () -> Unit) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.mirror_receive_data), subtitle = stringResource(R.string.mirror_receive_data_desc),
                     checked = isReceiving, onCheckedChange = { isReceiving = it },
-                    icon = Icons.Filled.Download, iconTint = MaterialTheme.colorScheme.tertiary,
+                    icon = Icons.Filled.Download, iconTint = MaterialTheme.colorScheme.primary,
                     position = CardPosition.TOP
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.mirror_send_data), subtitle = stringResource(R.string.mirror_send_data_desc),
                     checked = isSending, onCheckedChange = { isSending = it },
-                    icon = Icons.Filled.Upload, iconTint = MaterialTheme.colorScheme.tertiary,
+                    icon = Icons.Filled.Upload, iconTint = MaterialTheme.colorScheme.primary,
                     position = CardPosition.BOTTOM
                 )
             }
