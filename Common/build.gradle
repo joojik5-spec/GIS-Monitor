@@ -96,8 +96,8 @@ android {
         buildConfigField 'String', 'BASE_VERSION_NAME', "\"$appVersionName\""
         // GitHub repo the in-app updater reads releases from. Forks change it here.
         // Канал обновлений Solmi Sensor: папка solmi-sensor/ в gis-updates (манифест читается напрямую).
-        buildConfigField 'String', 'UPDATE_CHANNEL', '"gis-updates/solmi-update"'
-        buildConfigField 'String', 'UPDATE_URL', '"https://raw.githubusercontent.com/joojik5-spec/gis-updates/solmi/solmi-update/update-manifest.json"'
+        buildConfigField 'String', 'UPDATE_CHANNEL', '"GIS-Monitor/solmi-update"'
+        buildConfigField 'String', 'UPDATE_URL', '"https://raw.githubusercontent.com/joojik5-spec/GIS-Monitor/solmi-update/update-manifest.json"'
 
         buildConfigField 'String', 'BUILD_TIME', 'new java.text.SimpleDateFormat("HH:mm:ss dd-MMM-yyyy").format(new java.util.Date(' + System.currentTimeMillis() + 'L))'
         buildConfigField 'int', 'isRelease', '0'

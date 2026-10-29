@@ -1,6 +1,6 @@
 # Solmi Update
 
-Эта папка описывает публичный канал обновлений Solmi Sensor. Рабочие файлы канала публикуются в отдельном репозитории `joojik5-spec/gis-updates`, ветка `solmi`, каталог `solmi-update/`.
+Эта папка описывает публичный канал обновлений Solmi Sensor. Рабочие файлы публикуются в отдельную ветку `solmi-update` этого же репозитория `joojik5-spec/GIS-Monitor`.
 
 В каталоге публикации всегда должны лежать два файла:
 
@@ -14,12 +14,12 @@
 1. Запишите изменения текущей версии в корневой файл `UPDATE_NOTES_SENSOR.txt`: одна понятная пользователю правка на строку.
 2. Запустите workflow `Build Solmi Sensor` для ветки `solmi-sensor`.
 3. Сначала оставьте `publish_update = false`, скачайте артефакт `Solmi-Update-<номер>` и проверьте APK.
-4. После проверки повторите ручной запуск с `publish_update = true`. Workflow сам обновит `solmi-update/solmi-sensor.apk` и `solmi-update/update-manifest.json` в ветке `solmi` репозитория обновлений.
+4. После проверки повторите ручной запуск с `publish_update = true`. Workflow сам заменит `solmi-sensor.apk` и `update-manifest.json` в специальной ветке `solmi-update`.
 
 Приложение читает манифест по адресу:
 
-`https://raw.githubusercontent.com/joojik5-spec/gis-updates/solmi/solmi-update/update-manifest.json`
+`https://raw.githubusercontent.com/joojik5-spec/GIS-Monitor/solmi-update/update-manifest.json`
 
 Поле `history` сохраняет до 40 выпусков. Если пользователь пропустил несколько обновлений, приложение показывает все записи с `versionCode` выше установленного. Для пользователя предыдущей сборки показывается только последняя запись.
 
-Старый каталог `solmi-sensor/` и старые ветки нельзя удалять до успешной публикации и проверки первого выпуска через `solmi-update/`. После перехода их можно оставить как архив или удалить отдельным согласованным действием.
+Старые ветки нельзя удалять до успешной публикации и проверки первого выпуска через ветку `solmi-update`. После перехода их можно оставить как архив или удалить отдельным согласованным действием.

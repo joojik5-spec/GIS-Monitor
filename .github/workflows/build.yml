@@ -80,9 +80,12 @@ jobs:
         if: github.ref == 'refs/heads/solmi-sensor'
         run: |
           f=$(find . -path "*/build/outputs/apk/*" -name "*.apk" | head -1)
-          git clone -q --depth 1 -b solmi https://github.com/joojik5-spec/gis-updates.git "$RUNNER_TEMP/previous-updates" || true
-          PREVIOUS="$RUNNER_TEMP/previous-updates/solmi-update/update-manifest.json"
-          if [ ! -f "$PREVIOUS" ]; then PREVIOUS="$RUNNER_TEMP/previous-updates/solmi-sensor/update-manifest.json"; fi
+          git clone -q --depth 1 -b solmi-update "https://github.com/${{ github.repository }}.git" "$RUNNER_TEMP/previous-updates" || true
+          PREVIOUS="$RUNNER_TEMP/previous-updates/update-manifest.json"
+          if [ ! -f "$PREVIOUS" ]; then
+            git clone -q --depth 1 -b solmi https://github.com/joojik5-spec/gis-updates.git "$RUNNER_TEMP/legacy-updates" || true
+            PREVIOUS="$RUNNER_TEMP/legacy-updates/solmi-sensor/update-manifest.json"
+          fi
           python3 scripts/dist/solmi_update.py \
             --apk "$f" \
             --output-dir "$RUNNER_TEMP/solmi-update/solmi-update" \
@@ -97,22 +100,21 @@ jobs:
           retention-days: 14
           path: ${{ runner.temp }}/solmi-update/solmi-update
       # Публикация включается отдельным явным параметром ручного запуска.
-      - name: Publish Solmi Sensor update channel
+      - name: Publish Solmi Update channel
         if: github.ref == 'refs/heads/solmi-sensor' && github.event_name == 'workflow_dispatch' && inputs.publish_update == true
         env:
-          KEY: ${{ secrets.GIS_UPDATES_DEPLOY_KEY }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -z "$KEY" ]; then echo "Нет секрета GIS_UPDATES_DEPLOY_KEY" | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
-          mkdir -p ~/.ssh; printf '%s\n' "$KEY" > ~/.ssh/gis_dk; chmod 600 ~/.ssh/gis_dk
-          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-          export GIT_SSH_COMMAND="ssh -i ~/.ssh/gis_dk -o IdentitiesOnly=yes"
-          D="$RUNNER_TEMP/gu"; U=git@github.com:joojik5-spec/gis-updates.git
-          git clone -q --depth 1 -b solmi "$U" "$D" || { git init -q "$D"; git -C "$D" checkout -q --orphan solmi; git -C "$D" remote add origin "$U"; }
-          rm -rf "$D/solmi-update"
-          cp -R "$RUNNER_TEMP/solmi-update/solmi-update" "$D/solmi-update"
+          D="$RUNNER_TEMP/solmi-channel"
+          git init -q "$D"
+          git -C "$D" checkout -q --orphan solmi-update
+          cp "$RUNNER_TEMP/solmi-update/solmi-update/solmi-sensor.apk" "$D/solmi-sensor.apk"
+          cp "$RUNNER_TEMP/solmi-update/solmi-update/update-manifest.json" "$D/update-manifest.json"
           N=${{ github.run_number }}
-          cd "$D"; git add solmi-update; git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "Solmi Update $N"
-          for i in 1 2 3; do git push -q origin HEAD:solmi && break; git pull -q --rebase origin solmi; done
+          cd "$D"
+          git add solmi-sensor.apk update-manifest.json
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "Solmi Update $N"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:solmi-update
           echo "Канал Solmi Sensor: 1.3.0-Solmi.$N опубликован" >> "$GITHUB_STEP_SUMMARY"
       - name: Publish APK to monitor-apk branch
         if: github.ref != 'refs/heads/solmi-sensor'
